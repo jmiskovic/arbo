@@ -35,7 +35,37 @@ function love.draw()
 	love.graphics.origin()
 	love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(canvas, 0, 0)
-	--print(i)
+	love.graphics.setColor(0, 1, 0)
+	love.graphics.print(love.timer.getFPS() .. ', ' .. i)
+end
+
+local lastIndex = 0
+function dumpTGF(node)
+	local index = lastIndex + 1
+	lastIndex = index
+	local conns = {}
+	local label = node.is
+	for i, child in ipairs(node) do
+		if type(child) == 'table' then
+			childIndex, childConns = dumpTGF(child)
+			for i,v in ipairs(childConns) do
+				table.insert(conns, {v[1], v[2]})
+			end
+			table.insert(conns, {index, childIndex})
+		else
+			label = label .. ', ' .. child
+		end
+	end
+	print(index, label)
+	return index, conns
+end
+
+function love.load()
+	childIndex, childConns = dumpTGF(scene, 0)
+	print('#')
+	for i, conn in ipairs(childConns) do
+		print(conn[1], conn[2])
+	end
 end
 
 function traceDensity(node, x, y)

@@ -8,7 +8,7 @@
 {is= 'wrap',
 --]]
 
----[[ rotating rays
+--[[ rotating rays
 local ray =
   {is= 'transform',
     {is= 'intersect',
@@ -26,12 +26,12 @@ local ray =
 
 local rays = {is= 'union'}
 
-local count = 12
+local count = 6
 for i=1,count do
   table.insert(rays,
     {is= 'transform',
       ray,
-      {is= 'linear', 0, 0, 2 * math.pi / count * i}
+      {is= 'linear', 0, 0, math.pi / count * i}
     }
   )
 end
@@ -56,7 +56,7 @@ return
 }
 --]]
 
---[[ pulsating circle
+---[[ pulsating circle
 return {is= 'union',
   {is= 'negate',
     {is= 'wrap',
