@@ -1,11 +1,13 @@
+local lume = require('lume')
 --[[ commands
 {is= 'lhp'}
 {is= 'transform',
   {is= 'linear', 0, 0}
 {is= 'negate',
 {is= 'union',
-{is= 'intersection',
+{is= 'intersect',
 {is= 'wrap',
+{is= 'tint',
 --]]
 
 --[[ rotating rays
@@ -57,17 +59,34 @@ return
 --]]
 
 ---[[ pulsating circle
-return {is= 'union',
-  {is= 'negate',
+local pulsating_circle =
+  {is= 'wrap',
+    {is= 'transform',
+      {is= 'lhp'},
+      {is= 'linear', 0, -.8, 0, .01, .01},
+    },
+  }
+
+return {is= 'join',
+  {is= 'tint',
+    {is= 'negate',
+      pulsating_circle
+    },
+    lume.hsl(.55, .7, .5),
+  },
+
+  {is= 'tint',
     {is= 'wrap',
       {is= 'transform',
         {is= 'lhp'},
-        {is= 'linear', 0, -.8, 0, .01, .01},
-      }
-    }
+        {is= 'linear', 0, -.95, 0, .01, .01},
+      },
+    },
+    lume.hsl(.15, .7, .5),
   },
+
   update = function(scene, dt, t)
-    local node = scene[1][1][1][2]
+    local node = pulsating_circle[1][2]
     node[2] = -.5 + .3 * math.sin(t)
   end
 }
