@@ -11,8 +11,7 @@ local canvas = love.graphics.newCanvas()
 local time = 0
 function love.update(dt)
 	time = time + dt
-	local node = scene[1][1][1][2]
-	node[2] = -.5 + .3 * math.sin(time)
+	if scene.update then scene.update(scene, dt, time) end
 end
 
 function love.draw()
@@ -22,15 +21,13 @@ function love.draw()
 	love.graphics.translate(sw/2, sh/2)
 	love.graphics.scale(sh/2)
 	local i = 0
-	while love.timer.getTime() - t < .3 do
-		for i=1,100 do
-			local x = -sr + 2 * sr * math.random()
-			local y = -1 + 2 * math.random()
+	while love.timer.getTime() - t < .1 do
+		local x = -sr + 2 * sr * math.random()
+		local y = -1 + 2 * math.random()
 
-			local d = traceDensity(scene, x, y)
-			love.graphics.setColor(d, d, d)
-			love.graphics.circle('fill', x, y, math.random() * 5 / sh)
-		end
+		local d = traceDensity(scene, x, y)
+		love.graphics.setColor(d, d, d)
+		love.graphics.circle('fill', x, y, math.random() * 10 / sh)
 		i = i + 1
 	end
 	-- draw result of tracing
@@ -83,6 +80,6 @@ end
 function showError(msg, node)
   print(msg)
   if node then
-    persist.print(node)
+    --persist.print(node)
   end
 end

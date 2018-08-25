@@ -15,9 +15,6 @@ function love.conf(t)
   t.window.resizable = true
   t.window.vsync = false
   t.window.width, t.window.height = unpack(resolutions[0])
-  -- for android need to use:
-  -- t.window.height, t.window.width = unpack(resolutions[3])
-
   love.filesystem.setIdentity('arbo')
 end
 
