@@ -1,17 +1,16 @@
 local lume = require('lume')
-local scene = require('scenes/clock')
+local scene = require('scene')
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 
 local transform = love.math.newTransform()
-local S = function(...) return transform:setTransformation(unpack(...)):inverse() end
 
 local nodeTransforms = {}
 local function getTransform(node)
     if not nodeTransforms[node] then
-      nodeTransforms[node] = transform:setTransformation(unpack(node)):inverse()
+      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
     end
     return nodeTransforms[node]
 end
@@ -27,7 +26,7 @@ end
 local function updateTransforms(node)
   if type(node) == 'table' then
     if node.is == 'linear' then
-      nodeTransforms[node] = transform:setTransformation(unpack(node)):inverse()
+      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
     end
     for i,child in ipairs(node) do
       updateTransforms(child)
@@ -76,12 +75,10 @@ function trace(node, ray, x, y) -- returns ray color
   elseif node.is == 'lhp' then
   	ray[4] = 0.5 - y
     return ray
-  elseif node.is == 'transform' then
+  elseif node.is == 'linear' then
     if not node[1] then error('transform has no subtree', node) end
-    if node[2] and node[2].is == 'linear' then
-      local t = getTransform(node[2])
-      x,y = t:transformPoint(x, y)
-    end
+    local t = getTransform(node)
+    x,y = t:transformPoint(x, y)
     return trace(node[1], ray, x, y)
   elseif node.is == 'negate' then
     local ray = trace(node[1], ray, x, y)
@@ -122,7 +119,7 @@ function trace(node, ray, x, y) -- returns ray color
   elseif node.is == 'interact' then
     return trace(node[1], {node[2], node[3], node[4], node[5]}, x, y)
   else
-    error('unrecognized type', node)
+    error('unrecognized type ' .. node.is, node)
     return {1, 1, 1, 0}
   end
 end
@@ -133,10 +130,8 @@ function interact(node, x, y)
 	   node.is == 'intersect' then
 		return false
 	elseif node.is == 'transform' then
-    if node[2] and node[2].is == 'linear' then
-      local t = getTransform(node[2])
-      x,y = t:transformPoint(x, y)
-    end
+    local t = getTransform(node)
+    x,y = t:transformPoint(x, y)
     return interact(node[1], x, y)
 	elseif node.is == 'wrap' then
     local r = (x^2 + y^2) - 1
