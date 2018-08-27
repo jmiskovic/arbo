@@ -1,5 +1,5 @@
 local lume = require('lume')
-local scene = require('scene')
+local scene = require('scenes/clock')
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
@@ -73,7 +73,7 @@ function trace(node, ray, x, y) -- returns ray color
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node.is == 'lhp' then
-  	ray[4] = 0.5 - y
+  	ray[4] = 0.5 - y * 100
     return ray
   elseif node.is == 'linear' then
     if not node[1] then error('transform has no subtree', node) end
