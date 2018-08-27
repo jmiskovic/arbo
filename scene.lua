@@ -10,7 +10,7 @@ local lume = require('lume')
 {is= 'tint',
 --]]
 
---[[ rotating rays
+---[[ rotating rays
 local ray =
   {is= 'transform',
     {is= 'intersect',
@@ -26,30 +26,34 @@ local ray =
     {is= 'linear', 0, 0, 0, .2, .2}
   }
 
-local rays = {is= 'union'}
+local rays = {is= 'join'}
 
 local count = 6
 for i=1,count do
   table.insert(rays,
-    {is= 'transform',
-      ray,
-      {is= 'linear', 0, 0, math.pi / count * i}
+    {is= 'tint',
+      {is= 'transform',
+        ray,
+        {is= 'linear', 0, 0, math.pi / count * i}
+      },
+      lume.hsl(i/count, .75, .6),
     }
   )
 end
 
 return
 {is= 'transform',
-  {is= 'intersect',
-    rays,
-    {is= 'negate',
+  {is= 'join',
+    {is= 'tint',
       {is= 'wrap',
         {is= 'transform',
           {is= 'lhp'},
-          {is= 'linear', 0, -.85, 0, .01, .01}
+          {is= 'linear', 0, -.95, 0, .01, .01}
         }
-      }
-    }
+      },
+      lume.hsl(0,0,0),
+    },
+    rays,
   },
   {is= 'linear', 0, 0, 0},
   update= function(scene, dt, t)
@@ -58,7 +62,7 @@ return
 }
 --]]
 
----[[ pulsating circle
+--[[ pulsating circle
 local pulsating_circle =
   {is= 'wrap',
     {is= 'transform',
@@ -68,6 +72,33 @@ local pulsating_circle =
   }
 
 return {is= 'join',
+  {is= 'transform',
+    {is= 'interact',
+      {is= 'tint',
+        {is= 'intersect',
+          {is= 'transform', -- top
+            {is= 'lhp'},
+            {is= 'linear', 0, 1, 0}
+          },
+          {is= 'transform', -- left
+            {is= 'lhp'},
+            {is= 'linear', -1, 0, math.pi/2}
+          },
+          {is= 'transform', -- bottom
+            {is= 'lhp'},
+            {is= 'linear', 0, -1, math.pi}
+          },
+          {is= 'transform', -- right
+            {is= 'lhp'},
+            {is= 'linear', 1, 0, -math.pi/2}
+          },
+        },
+        lume.hsl(0, .7, .5),
+      },
+    },
+    {is= 'linear', 0, -.6, 0, .1, .1},
+  },
+
   {is= 'tint',
     {is= 'negate',
       pulsating_circle
@@ -75,19 +106,19 @@ return {is= 'join',
     lume.hsl(.55, .7, .5),
   },
 
-  {is= 'tint',
-    {is= 'wrap',
-      {is= 'transform',
+  {is= 'transform',
+    {is= 'tint',
+      {is= 'wrap',
         {is= 'lhp'},
-        {is= 'linear', 0, -.95, 0, .01, .01},
       },
+      lume.hsl(.15, .7, .5),
     },
-    lume.hsl(.15, .7, .5),
+    {is= 'linear', 0, 0, 0, .3, .3},
   },
 
   update = function(scene, dt, t)
     local node = pulsating_circle[1][2]
-    node[2] = -.5 + .3 * math.sin(t)
+    node[2] = -.5 + .3 * math.sin(t/3)
   end
 }
 --]]
