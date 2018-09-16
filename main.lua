@@ -1,32 +1,64 @@
 local lume = require('lume')
-local scene = require('scenes/clock')
+local scene = require('scenes/useless')
 local TGF = require('TGF')
+local persist = require('persist')
 
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
 
-local time = 0
-function love.update(dt)
-  time = time + dt
-  if scene.update then scene.update(scene, dt, time) end
+transform = love.math.newTransform()
+-- transform matrix calculation caching per node
+nodeTransforms = {}
+function getTransform(node)
+    if not nodeTransforms[node] then
+      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
+    end
+    return nodeTransforms[node]
 end
 
-function love.draw()
-  local white = {1, 1, 1}
-  renderer:draw(scene)
-  love.graphics.setColor(1, 1, 1)
-  love.graphics.draw(renderer.canvas)
-  love.graphics.setColor(0, 1, 0)
-  love.graphics.print(love.timer.getFPS())
-end
-
-function love.load()
-  --TGF.export(scene)
+local function updateTransforms(node)
+  if type(node) == 'table' then
+    if node.is == 'linear' then
+      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
+    end
+    for i,child in ipairs(node) do
+      updateTransforms(child)
+    end
+  end
 end
 
 function interact(node, x, y)
-  if node.is == 'lhp' or
+  if node.react then
+    if x^2 + y^2 < 1 then
+      print(string.format('interacted r=%.2f, x=%.2f, y=%.2f', math.sqrt(x*x+y*y), x, y))
+      local closeness = {} -- {case, closeness}
+      for i, reaction in ipairs(node.react) do
+        closeness[reaction] = 0
+        for key, condition in pairs(reaction.case) do
+          closeness[reaction] = closeness[reaction] + (condition - (node[key] or 0))^2
+          print(key, node[key])
+        end
+        print('distance from action', reaction.name, closeness[reaction])
+      end
+      local closest = nil
+      for case, distance2 in pairs(closeness) do
+        closest = closest or case
+        if distance2 < closeness[closest] then
+          closest = case
+        end
+      end
+      if closest then
+        print('executing', closest.name)
+        for i, instruction in ipairs(closest) do
+          if instruction.is == 'set' then
+            node[instruction[1]] = instruction[2]
+          end
+        end
+      end
+    end
+    return true
+  elseif node.is == 'lhp' or
      node.is == 'union' or
      node.is == 'intersect' then
     return false
@@ -48,9 +80,6 @@ function interact(node, x, y)
       if i then break end
     end
     return i
-  elseif node.is == 'interact' then
-    print(string.format('interacted r=%.2f, x=%.2f, y=%.2f', math.sqrt(x*x+y*y), x, y))
-    return false
   else
     return false
   end
@@ -69,4 +98,30 @@ function error(msg, node)
     print('node is', node.is)
     --persist.print(node)
   end
+end
+
+local time = 0
+function love.update(dt)
+  time = time + dt
+  if scene.update then scene.update(scene, dt, time) end
+  updateTransforms(scene)
+end
+
+function love.draw()
+  local white = {1, 1, 1}
+  renderer:draw(scene)
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.draw(renderer.canvas)
+  love.graphics.setColor(0, 1, 0)
+  love.graphics.print(love.timer.getFPS())
+    local touches = love.touch.getTouches()
+
+    for i, id in ipairs(touches) do
+        local x, y = love.touch.getPosition(id)
+        love.graphics.circle("fill", x, y, 20)
+    end
+end
+
+function love.load()
+  --TGF.export(scene)
 end

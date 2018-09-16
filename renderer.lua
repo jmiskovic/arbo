@@ -11,31 +11,10 @@ function module.new(width, height)
   return instance
 end
 
-local transform = love.math.newTransform()
--- transform matrix calculation caching per node
-local nodeTransforms = {}
-local function getTransform(node)
-    if not nodeTransforms[node] then
-      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
-    end
-    return nodeTransforms[node]
-end
-
-local function updateTransforms(node)
-  if type(node) == 'table' then
-    if node.is == 'linear' then
-      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
-    end
-    for i,child in ipairs(node) do
-      updateTransforms(child)
-    end
-  end
-end
-
 function module:draw(scene)
   local white = {1, 1, 1}
   local t = love.timer.getTime()
-  updateTransforms(scene)
+  --updateTransforms(scene)
   love.graphics.push('all')
   love.graphics.setCanvas(self.canvas)
   love.graphics.translate(self.width/2, self.height/2)
@@ -49,7 +28,7 @@ function module:draw(scene)
     --TODO: this hack makes it possible to not clear the canvas
     if ray[4] < 0.01 then ray = {0, 0, 0, 1} end
     love.graphics.setColor(unpack(ray))
-    love.graphics.circle('fill', x, y, math.random() * 20 / self.height)
+    love.graphics.circle('fill', x, y, math.random() * 10 / self.height)
   end
   love.graphics.pop()
 end
@@ -102,8 +81,8 @@ function trace(node, ray, x, y) -- returns ray color
     return trace(node[1], ray, a, r)
   elseif node.is == 'tint' then
     return trace(node[1], {node[2], node[3], node[4], node[5]}, x, y)
-  elseif node.is == 'interact' then
-    return trace(node[1], ray, x, y)
+  --elseif node.is == 'react' then
+  --  return trace(node[1], ray, x, y)
   else
     error('unrecognized type ' .. node.is, node)
     return {1, 1, 1, 0}
