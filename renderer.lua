@@ -14,13 +14,12 @@ end
 function module:draw(scene)
   local white = {1, 1, 1}
   local t = love.timer.getTime()
-  --updateTransforms(scene)
+  local frames = 0
   love.graphics.push('all')
   love.graphics.setCanvas(self.canvas)
   love.graphics.translate(self.width/2, self.height/2)
   love.graphics.scale(self.height/2, -self.height/2)
-
-  while love.timer.getTime() - t < .1 do
+  while love.timer.getTime() - t < .1 do --lume.remap(love.mouse.getY(), 0, love.graphics.getHeight(), .1, .001) do
     local x = -self.ratio + 2 * self.ratio * math.random()
     local y = -1 + 2 * math.random()
 
@@ -29,8 +28,11 @@ function module:draw(scene)
     if ray[4] < 0.01 then ray = {0, 0, 0, 1} end
     love.graphics.setColor(unpack(ray))
     love.graphics.circle('fill', x, y, math.random() * 10 / self.height)
+    frames = frames + 1
   end
+  --love.timer.sleep(.1)
   love.graphics.pop()
+  return frames
 end
 
 function trace(node, ray, x, y) -- returns ray color
@@ -38,7 +40,7 @@ function trace(node, ray, x, y) -- returns ray color
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node.is == 'lhp' then
-  	ray[4] = 0.5 - y * 100
+  	ray[4] = 0.5 - y * 10000
     return ray
   elseif node.is == 'linear' then
     if not node[1] then error('transform has no subtree', node) end
@@ -50,31 +52,30 @@ function trace(node, ray, x, y) -- returns ray color
     ray[4] = 1 - ray[4]
     return ray
   elseif node.is == 'union' then
-  	local r
+  	local ray = ray
     local max = -math.huge
     for i,branch in ipairs(node) do
-      r = trace(branch, ray, x, y)
+      ray = trace(branch, ray, x, y)
       max = math.max(max, r[4])
     end
     --print('union', r[1],r[2],r[3],r[4])
-    r[4] = max
-    return r
+    ray[4] = max
+    return ray
   elseif node.is == 'join' then
-  	local r
+  	local ray = ray
     for i,branch in ipairs(node) do
-      r = trace(branch, ray, x, y)
-      if r[4] > 0 then break end
+      ray = trace(branch, ray, x, y)
+      if ray[4] > 0 then break end
     end
-    return r
+    return ray
   elseif node.is == 'intersect' then
-    local r
+    local ray = ray
     local min = math.huge
     for i,branch in ipairs(node) do
-      r = trace(branch, ray, x, y)
-      min = math.min(min, r[4])
+      min = math.min(min, trace(branch, ray, x, y)[4])
     end
-    r[4] = min
-    return r
+    ray[4] = min
+    return ray
   elseif node.is == 'wrap' then
     local r = (x^2 + y^2) - 1
     local a = -math.atan2(y, x) / math.pi

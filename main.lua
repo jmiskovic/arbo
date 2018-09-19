@@ -1,7 +1,6 @@
 local lume = require('lume')
-local scene = require('scenes/useless')
+local scene = require('scenes/clock')
 local TGF = require('TGF')
-local persist = require('persist')
 
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
@@ -92,11 +91,19 @@ function love.mousereleased(x, y, button, istouch, presses)
   interact(scene, x, y)
 end
 
+function love.touchreleased(id, x, y, dx, dy, pressure)
+  love.mousereleased(x, y, 1, true, 1)
+end
+
+function love.touchmoved(id, x, y, dx, dy, pressure)
+  love.mouse.setPosition(x, y)
+end
+
+
 function error(msg, node)
   print(msg)
   if node then
     print('node is', node.is)
-    --persist.print(node)
   end
 end
 
@@ -109,17 +116,12 @@ end
 
 function love.draw()
   local white = {1, 1, 1}
-  renderer:draw(scene)
+  local rayCount = 0
+  rayCount = renderer:draw(scene)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
-  love.graphics.setColor(0, 1, 0)
-  love.graphics.print(love.timer.getFPS())
-    local touches = love.touch.getTouches()
-
-    for i, id in ipairs(touches) do
-        local x, y = love.touch.getPosition(id)
-        love.graphics.circle("fill", x, y, 20)
-    end
+  love.graphics.setColor(0, 1, 1)
+  love.graphics.print(rayCount / 1000)
 end
 
 function love.load()
