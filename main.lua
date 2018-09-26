@@ -1,5 +1,5 @@
 local lume = require('lume')
-local scene = require('scenes/clock')
+local scene = require('scenes/sunset')
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
@@ -107,7 +107,8 @@ function error(msg, node)
   end
 end
 
-local time = 0
+local datetime = os.date('*t')
+local time = datetime.hour * 3600 + datetime.min * 60 + datetime.sec
 function love.update(dt)
   time = time + dt
   if scene.update then scene.update(scene, dt, time) end
@@ -121,7 +122,7 @@ function love.draw()
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
   love.graphics.setColor(0, 1, 1)
-  love.graphics.print(rayCount / 1000)
+  --love.graphics.print(rayCount / 1000)
 end
 
 function love.load()

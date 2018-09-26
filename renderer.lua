@@ -1,11 +1,14 @@
 local module = {}
 
 local lume = require('lume')
+local noise = require('noise')
+
 
 function module.new(width, height)
   local instance = setmetatable({}, {__index=module})
   instance.canvas = love.graphics.newCanvas(width, height)
   instance.width = width
+  instance.lastFrameTime = love.timer.getTime()
   instance.height = height
   instance.ratio = width / height -- should be around 1.7 to 2.1, typically 16/9 = 1.77
   return instance
@@ -15,11 +18,13 @@ function module:draw(scene)
   local white = {1, 1, 1}
   local t = love.timer.getTime()
   local frames = 0
+  local size = 20 + 50 * love.mouse.getY() / love.graphics.getHeight()
+  -- local size =  1 + 50 * math.exp(- (love.timer.getTime() - self.lastFrameTime))
   love.graphics.push('all')
   love.graphics.setCanvas(self.canvas)
   love.graphics.translate(self.width/2, self.height/2)
   love.graphics.scale(self.height/2, -self.height/2)
-  while love.timer.getTime() - t < .1 do --lume.remap(love.mouse.getY(), 0, love.graphics.getHeight(), .1, .001) do
+  while love.timer.getTime() - t < .15 do
     local x = -self.ratio + 2 * self.ratio * math.random()
     local y = -1 + 2 * math.random()
 
@@ -27,10 +32,17 @@ function module:draw(scene)
     --TODO: this hack makes it possible to not clear the canvas
     if ray[4] < 0.01 then ray = {0, 0, 0, 1} end
     love.graphics.setColor(unpack(ray))
-    love.graphics.circle('fill', x, y, math.random() * 10 / self.height)
+    --love.graphics.circle('fill', x, y, math.random() * size / self.height)
+    love.graphics.push()
+      love.graphics.translate(x, y)
+      love.graphics.rotate(.1+math.random())
+      local d = math.random() * size / self.height
+      --love.graphics.rectangle('fill', 0, 0, d, d)
+      love.graphics.ellipse('fill', 0, 0, d, d/7)
+    love.graphics.pop()
     frames = frames + 1
   end
-  --love.timer.sleep(.1)
+  love.timer.sleep(.1)
   love.graphics.pop()
   return frames
 end
@@ -40,7 +52,10 @@ function trace(node, ray, x, y) -- returns ray color
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node.is == 'lhp' then
-  	ray[4] = 0.5 - y * 10000
+    ray[4] = 0.5 - y * 10
+    return ray
+  elseif node.is == 'simplex' then
+    ray[4] = (math.exp(-(y * 1.9)^2)*noise.Simplex2D(x, y) + .1) * 1
     return ray
   elseif node.is == 'linear' then
     if not node[1] then error('transform has no subtree', node) end
@@ -65,7 +80,7 @@ function trace(node, ray, x, y) -- returns ray color
   	local ray = ray
     for i,branch in ipairs(node) do
       ray = trace(branch, ray, x, y)
-      if ray[4] > 0 then break end
+      if ray[4] > 0.2 then break end
     end
     return ray
   elseif node.is == 'intersect' then

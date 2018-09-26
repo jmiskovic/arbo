@@ -11,7 +11,7 @@ function love.conf(t)
     [8] = {720, 1280},  -- most common Android resolution in portrait
   }
   t.window.title = "arbo"
-  t.window.fullscreen = false
+  t.window.fullscreen = not false
   t.window.resizable = true
   t.window.vsync = false
   t.window.width, t.window.height = unpack(resolutions[3])
