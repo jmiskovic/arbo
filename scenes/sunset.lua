@@ -1,84 +1,85 @@
 local lume = require('lume')
+nodes = require('nodes')
 
 sky =
-{is= 'tint',
-  {is= 'join',
-    {is= 'join',
-      {is= 'lhp'},
-      {is= 'linear',
-        {is= 'lhp'},
-        0, 0, math.pi,
+{tint,
+  {0.14, 0.5, 0.8},
+  {join,
+    {join,
+      {lhp},
+      {linear,
+        {0, 0, 0.5},
+        {lhp},
       }
     },
   },
-  lume.hsl(0.14, 0.5, 0.8),
 }
 
 sun =
-{is= 'tint',
-  {is= 'linear',
-    {is= 'wrap',
-      {is= 'lhp'},
+{tint,
+  {0.15, 0.73, 0.97},
+  {linear,
+    {0, 0, 0, .2},
+    {wrap,
+      {lhp},
     },
-    0, 0, 0, .2,
   },
-  lume.hsl(0.15, 0.73, 0.97),
 }
 
 sea =
-{is= 'tint',
-  {is= 'lhp' },
-  lume.hsl(0.58, 0.38, 0.16),
+{tint,
+  {0.58, 0.38, 0.16},
+  {lhp},
 }
 
 cloudLayer =
-{is= 'join',
-{is= 'tint',
-  {is= 'simplex'},
-  lume.hsl(0.2, 0.38, 0.86),
-},
-{is= 'tint',
-  {is= 'linear',
-    {is= 'simplex'},
-    0, -0.12, 0, 1, 1,
+{join,
+  {tint,
+    {0.2, 0.38, 0.86},
+    {simplex},
   },
-  lume.hsl(0.1, 0.53, 0.65),
-}
+  {tint,
+    {0.1, 0.53, 0.65},
+    {linear,
+      {0, -0.12, 0, 1, 1},
+      {simplex},
+    },
+  }
 }
 
 clouds =
-{is= 'linear',
-    cloudLayer,
-  0, 0.2, 0, .7, .15,
+{linear,
+  {0, 0.2, 0, .7, .15},
+  cloudLayer,
 }
 
 mirror_sun =
-{is= 'linear',
+{linear,
+  {0, .05, 0, 1, -1},
   sun,
-  0, .05, 0, 1, -1,
 }
 
 reflection =
-{is= 'tint',
-  {is= 'join',
-    {is= 'intersect',
-      {is= 'linear',
+{tint,
+  {.10, .78, .35},
+  {join,
+    {intersect,
+      {linear,
+        {0, 0, 0, 1, 5},
         mirror_sun,
-        0, 0, 0, 1, 5,
       },
       sea,
     },
-    {is= 'linear',
+    {linear,
+      {0, 50, 0, 1, .06},
       mirror_sun,
-      0, 50, 0, 1, .06,
     },
   },
-  lume.hsl(.10, .78, .35),
 }
 
 function gaussian (mean, variance)
     return  math.sqrt(-2 * variance * math.log(math.random())) *
-            math.cos(2 * math.pi * math.random()) + mean
+            math.cos(math.random()) + mean
 end
 
   -- finding accelerometer
@@ -94,7 +95,7 @@ end
 
 
 return
-{is= 'join',
+{join,
   clouds,
   reflection,
   sea,
@@ -102,41 +103,35 @@ return
   sky,
   update = function(scene, dt, t)
     local hour = lume.remap(love.mouse.getX(), 0, love.graphics.getWidth(), 15, 23)
-    clouds[2] = t / 100 -- + readTilt()
+    clouds[2][1] = t / 100 -- + readTilt()
     --16 + ((t/6 + 3.5) % 8)
 
     -- sun location
-    sun[1][2] = lume.remap(hour, 16, 21, -.1, -.3)
-    sun[1][3] = lume.remap(hour, 16, 20.5, .51, 0)
+    sun[3][2][1] = lume.remap(hour, 16, 21, -.1, -.3)
+    sun[3][2][2] = lume.remap(hour, 16, 20.5, .51, 0)
     -- sun shade
-    sun[2], sun[3], sun[4] = lume.hsl(
-      lume.remap(gaussian(hour, .3), 16, 21, .15, .05),
-      .95,
-      lume.remap(gaussian(hour, .3), 16, 21, .97, .4))
+    sun[2][1] = lume.remap(gaussian(hour, .3), 16, 21, .15, .05)
+    sun[2][2] = .95
+    sun[2][3] = lume.remap(gaussian(hour, .3), 16, 21, .97, .4)
     -- reflection shade
-    --reflection[2], reflection[3], reflection[4] = sea[2], sea[3], sea[4]
-    reflection[2], reflection[3], reflection[4] = lume.hsl(
-      lume.remap(gaussian(hour, .1), 16, 21, .15, .05),
-      .95,
-      lume.remap(hour, 16, 21, .97, .4))
+    reflection[2][1] = lume.remap(gaussian(hour, .1), 16, 21, .15, .05)
+    reflection[2][2] = .95
+    reflection[2][3] = lume.remap(hour, 16, 21, .97, .4)
     -- cloud shade
-    clouds[1][1][2], clouds[1][1][3], clouds[1][1][4] = lume.hsl(
-      lume.remap(hour, 16, 21, 0.2, 0.05),
-      lume.remap(hour, 16, 21, .38, .7),
-      lume.remap(hour, 16, 20, .96, .3))
-    clouds[1][2][2], clouds[1][2][3], clouds[1][2][4] = lume.hsl(
-      lume.remap(hour, 16, 21, 0.1, 0.02),
-      lume.remap(hour, 16, 21, .53, .6),
-      lume.remap(hour, 16, 20, .65, .4))
+    clouds[3][2][2][1] = lume.remap(hour, 16, 21, 0.2, 0.05)
+    clouds[3][2][2][2] = lume.remap(hour, 16, 21, .38, .7)
+    clouds[3][2][2][3] = lume.remap(hour, 16, 20, .96, .3)
+
+    clouds[3][3][2][1] = lume.remap(hour, 16, 21, 0.1, 0.02)
+    clouds[3][3][2][2] = lume.remap(hour, 16, 21, .53, .6)
+    clouds[3][3][2][3] = lume.remap(hour, 16, 20, .65, .4)
     -- sky shade
-    sky[2], sky[3], sky[4] = lume.hsl(
-      lume.remap(hour, 14, 21, .17, .07),
-      lume.remap(hour, 14, 21, .3, .9),
-      lume.remap(hour, 14, 23, .97, .02, 'clamp'))
+    sky[2][1] = lume.remap(hour, 14, 21, .17, .07)
+    sky[2][2] = lume.remap(hour, 14, 21, .3, .9)
+    sky[2][3] = lume.remap(hour, 14, 23, .97, .02, 'clamp')
     -- sea shade
-    sea[2], sea[3], sea[4] = lume.hsl(
-      lume.remap(hour, 16, 21, .6, .38, 'clamp'),
-      lume.remap(hour, 16, 19, .6, .3),
-      lume.remap(hour, 16, 22, .37, .08))
+    sea[2][1] = lume.remap(hour, 16, 21, .6, .38, 'clamp')
+    sea[2][2] = lume.remap(hour, 16, 19, .6, .3)
+    sea[2][3] = lume.remap(hour, 16, 22, .37, .08)
   end
 }

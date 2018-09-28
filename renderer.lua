@@ -31,7 +31,7 @@ function module:draw(scene)
     local ray = trace(scene, white, x, y)
     --TODO: this hack makes it possible to not clear the canvas
     if ray[4] < 0.01 then ray = {0, 0, 0, 1} end
-    love.graphics.setColor(unpack(ray))
+    love.graphics.setColor(lume.hsl(unpack(ray)))
     --love.graphics.circle('fill', x, y, math.random() * size / self.height)
     love.graphics.push()
       love.graphics.translate(x, y)
@@ -42,65 +42,67 @@ function module:draw(scene)
     love.graphics.pop()
     frames = frames + 1
   end
-  love.timer.sleep(.1)
+  love.timer.sleep(.015)
   love.graphics.pop()
   return frames
 end
 
 function trace(node, ray, x, y) -- returns ray color
-  if not node.is then
+  if (not node.is) and (type(node[1]) ~= 'string') then
     error('node has no type?!', node)
     return {1, 1, 1, 0}
-  elseif node.is == 'lhp' then
+  elseif node[1] == 'lhp' then
     ray[4] = 0.5 - y * 10
     return ray
-  elseif node.is == 'simplex' then
+  elseif node[1] == 'simplex' then
     ray[4] = (math.exp(-(y * 1.9)^2)*noise.Simplex2D(x, y) + .1) * 1
     return ray
-  elseif node.is == 'linear' then
-    if not node[1] then error('transform has no subtree', node) end
+  elseif node[1] == 'linear' then
+    --if not node[1] then error('transform has no subtree', node) end
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return trace(node[1], ray, x, y)
-  elseif node.is == 'negate' then
-    local ray = trace(node[1], ray, x, y)
+    return trace(node[3], ray, x, y)
+  elseif node[1] == 'negate' then
+    local ray = trace(node[2], ray, x, y)
     ray[4] = 1 - ray[4]
     return ray
-  elseif node.is == 'union' then
+  elseif node[1] == 'union' then
   	local ray = ray
     local max = -math.huge
-    for i,branch in ipairs(node) do
+    for i=2, #node do
+      branch = node[i]
       ray = trace(branch, ray, x, y)
       max = math.max(max, r[4])
     end
-    --print('union', r[1],r[2],r[3],r[4])
     ray[4] = max
     return ray
-  elseif node.is == 'join' then
+  elseif node[1] == 'join' then
   	local ray = ray
-    for i,branch in ipairs(node) do
+    for i=2, #node do
+      branch = node[i]
       ray = trace(branch, ray, x, y)
       if ray[4] > 0.2 then break end
     end
     return ray
-  elseif node.is == 'intersect' then
+  elseif node[1] == 'intersect' then
     local ray = ray
     local min = math.huge
-    for i,branch in ipairs(node) do
+    for i=2, #node do
+      branch = node[i]
       min = math.min(min, trace(branch, ray, x, y)[4])
     end
     ray[4] = min
     return ray
-  elseif node.is == 'wrap' then
+  elseif node[1] == 'wrap' then
     local r = (x^2 + y^2) - 1
     local a = -math.atan2(y, x) / math.pi
-    return trace(node[1], ray, a, r)
-  elseif node.is == 'tint' then
-    return trace(node[1], {node[2], node[3], node[4], node[5]}, x, y)
+    return trace(node[2], ray, a, r)
+  elseif node[1] == 'tint' then
+    return trace(node[3], {node[2][1], node[2][2], node[2][3], node[2][4]}, x, y)
   --elseif node.is == 'react' then
   --  return trace(node[1], ray, x, y)
   else
-    error('unrecognized type ' .. node.is, node)
+    error('unrecognized type', node)
     return {1, 1, 1, 0}
   end
 end

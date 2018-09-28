@@ -2,6 +2,9 @@ local lume = require('lume')
 local scene = require('scenes/sunset')
 local TGF = require('TGF')
 
+require('nodes')
+
+
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
@@ -9,22 +12,29 @@ local renderer = require('renderer').new(sw, sh)
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
 nodeTransforms = {}
-function getTransform(node)
-    if not nodeTransforms[node] then
-      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
-    end
-    return nodeTransforms[node]
-end
 
 local function updateTransforms(node)
   if type(node) == 'table' then
-    if node.is == 'linear' then
-      nodeTransforms[node] = transform:setTransformation(node[2], node[3], node[4], node[5], node[6]):inverse()
+    if node[1] == 'linear' then
+      nodeTransforms[node] = transform:setTransformation(
+          node[2][1],                 -- dx
+          node[2][2],                 -- dy
+          (node[2][3] or 0) * 2 * math.pi,   -- rotation, have to convert 0..1 to 0..2pi
+          node[2][4],                 -- sx
+          node[2][5]                  -- sy
+        ):inverse()
     end
     for i,child in ipairs(node) do
       updateTransforms(child)
     end
   end
+end
+
+function getTransform(node)
+    if not nodeTransforms[node] then
+      updateTransforms(node)
+    end
+    return nodeTransforms[node]
 end
 
 function interact(node, x, y)
@@ -48,33 +58,34 @@ function interact(node, x, y)
         end
       end
       if closest then
-        print('executing', closest.name)
         for i, instruction in ipairs(closest) do
-          if instruction.is == 'set' then
-            node[instruction[1]] = instruction[2]
+          if instruction[1] == 'set' then
+            node[instruction[2]] = instruction[3]
           end
         end
       end
     end
     return true
-  elseif node.is == 'lhp' or
-     node.is == 'union' or
-     node.is == 'intersect' then
+  elseif node[1] == 'lhp' or
+     node[1] == 'simplex' or
+     node[1] == 'union' or
+     node[1] == 'intersect' then
     return false
-  elseif node.is == 'linear' then
+  elseif node[1] == 'linear' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return interact(node[1], x, y)
-  elseif node.is == 'wrap' then
+    return interact(node[2], x, y) or interact(node[3], x, y)
+  elseif node[1] == 'wrap' then
     local r = (x^2 + y^2) - 1
     local a = -math.atan2(y, x) / math.pi
-    return interact(node[1], a, r)
-  elseif node.is == 'negate' or
-         node.is == 'tint' then
-    return interact(node[1], x, y)
-  elseif node.is == 'join' then
+    return interact(node[2], a, r)
+  elseif node[1] == 'negate' or -- TODO: what to do here?
+         node[1] == 'tint' then
+    return interact(node[2], x, y)
+  elseif node[1] == 'join' then
     local i = false
-    for _,branch in ipairs(node) do
+    for i=2, #node do
+      branch = node[i]
       i = interact(branch, x, y)
       if i then break end
     end
@@ -103,7 +114,13 @@ end
 function error(msg, node)
   print(msg)
   if node then
-    print('node is', node.is)
+    print('node is', node[1])
+    if type(node[1]) == 'table' then
+      for k,v in pairs(node[1]) do
+        print(k, '=', v)
+      end
+      print(node[1][2][3])
+    end
   end
 end
 

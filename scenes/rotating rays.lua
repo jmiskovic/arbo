@@ -1,51 +1,52 @@
 local lume = require('lume')
+require('nodes')
 
 local ray =
-  {is= 'linear',
-    {is= 'intersect',
-      {is= 'linear',
-        {is= 'lhp'},
-        0, -.7, math.pi, .01, .01
+  {linear,
+    {0, 0, 0, .2, .2},
+    {intersect,
+      {linear,
+        {0, -.7, .5, .01, .01},
+        {lhp},
       },
-      {is= 'linear',
-        {is= 'lhp'},
-        0,  .7, 0, .01, .01
+      {linear,
+        {0,  .7, 0, .01, .01},
+        {lhp},
       },
     },
-    0, 0, 0, .2, .2
   }
 
-local rays = {is= 'join'}
+local rays = {join}
 
 local count = 6
 for i=1,count do
   table.insert(rays,
-    {is= 'tint',
-      {is= 'linear',
+    {tint,
+      {i/count, .75, .6},
+      {linear,
+        {0, 0, .5 / count * i},
         ray,
-        0, 0, math.pi / count * i
       },
-      lume.hsl(i/count, .75, .6),
     }
   )
 end
 
 return
-{is= 'linear',
-  {is= 'join',
-    {is= 'tint',
-      {is= 'wrap',
-        {is= 'linear',
-          {is= 'lhp'},
-          0, -.92, 0, .01, .01
+{linear,
+  {0, 0, 0,},
+  {join,
+    {tint,
+      {0,0,0},
+      {wrap,
+        {linear,
+          {0, -.92, 0, .01, .01},
+          {lhp},
         }
       },
-      lume.hsl(0,0,0),
     },
     rays,
   },
-  0, 0, 0,
   update= function(scene, dt, t)
-    scene[4] = t / 4
+    scene[2][3] = t / 100
   end
 }

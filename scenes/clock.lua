@@ -1,107 +1,110 @@
 local lume = require('lume')
+require('nodes')
 
 local dial =
-{is= 'linear',
-  {is= 'intersect',
-    {is= 'linear',
-      {is= 'lhp'},
-      0, -.05, math.pi + .05, .01, .01
+{linear,
+  {0, 0},
+  {intersect,
+    {linear,
+      {0, -.05, .5 + .008, .01, .01},
+      {lhp},
     },
-    {is= 'linear',
-      {is= 'lhp'},
-      0,  .05, -.05, .01, .01
+    {linear,
+      {0,  .05, -.008, .01, .01},
+      {lhp},
     },
-    {is= 'linear',
-      {is= 'lhp'},
-      -.3,  0, math.pi/2, .01, .01
+    {linear,
+      {-.3,  0, .25, .01, .01},
+      {lhp},
     },
   },
-  0, 0
 }
 
 local seconds =
-{ is= 'tint',
-  { is= 'linear',
+{ tint,
+  {.55, .2, .1},
+  { linear,
+    {0, 0, .25, 1, 1},
     dial,
-    0, 0, .4, 1, 1
   },
-  lume.hsl(.55, .2, .1)
 }
 
 local minutes =
-{ is= 'tint',
-  { is= 'linear',
+{ tint,
+  {.55, .2, .2},
+  {linear,
+    {0, 0, .2, .8, .8},
     dial,
-    0, 0, .2, .8, .8,
   },
-  lume.hsl(.55, .2, .2)
 }
 
 local hours =
-{ is= 'tint',
-  { is= 'linear',
+{ tint,
+  {.55, .2, .3},
+  {linear,
+    {0, 0, .5, .6, .6},
     dial,
-    0, 0, .5, .6, .6
   },
-  lume.hsl(.55, .2, .3)
 }
 
 local face =
-{ is= 'join',
-  { is= 'tint',
-    { is= 'wrap',
-      { is= 'lhp'}
+{ join,
+  { tint,
+    {.15, .2, .8},
+    { wrap,
+      { lhp}
     },
-    lume.hsl(.15, .2, .8)
   }
 }
 
 local mark =
-{ is= 'tint',
-  { is= 'intersect',
-    { is= 'linear', { is = 'lhp'}, .9,  .04, 0 },
-    { is= 'linear', { is = 'lhp'}, .9, -.04, math.pi },
-    { is= 'linear', { is = 'lhp'}, .9 - .06, 0,  math.pi/2 },
-    { is= 'linear', { is = 'lhp'}, .9 + .06, 0, -math.pi/2 },
+{ tint,
+  {.55, .3, .4},
+  { intersect,
+    {linear, {.9,  .04, 0}, {lhp}},
+    {linear, {.9, -.04, .5}, {lhp}},
+    {linear, {.9 - .06, 0,  .5/2}, {lhp}},
+    {linear, {.9 + .06, 0, -.5/2}, {lhp}},
   },
-  lume.hsl(.55, .3, .4)
 }
 
 for hour=1,12 do
-  table.insert(face, 1,
-    { is= 'linear',
+  table.insert(face, 2,
+    { linear,
+      {0, 0, 2 * .5 * hour / 12},
       mark,
-      0, 0, 2 * math.pi * hour / 12
     })
 end
 
 local cap =
-{ is= 'tint',
-  { is= 'linear',
-    { is= 'wrap',
-      { is= 'lhp'}
+{ tint,
+  {0, 0, .1},
+  { linear,
+    {0, 0, 0, .1, .1},
+    { wrap,
+      { lhp}
     },
-    0, 0, 0, .1, .1
   },
-  lume.hsl(0, 0, .1)
 }
 
 local clock =
-{ is= 'join',
+{ join,
   cap,
   seconds,
   minutes,
   hours,
   face,
+---[[
   update = function (scene, dt, t)
     local time = os.date('*t')
-    scene[2][1][4] = math.pi/2 -time.sec  / 60 * 2 * math.pi
-    scene[3][1][4] = math.pi/2 -time.min  / 60 * 2 * math.pi
-    scene[4][1][4] = math.pi/2 -time.hour / 24 * 2 * math.pi
+    scene[3][3][2][3] = .5/2 -time.sec  / 60 * 2 * .5
+    scene[4][3][2][3] = .5/2 -time.min  / 60 * 2 * .5
+    scene[5][3][2][3] = .5/2 -time.hour / 24 * 2 * .5
     --print(Now.hour)
     --print(Now.min)
     --print(Now.sec)
   end,
+--]]
 }
 
 return clock
