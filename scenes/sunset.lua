@@ -36,13 +36,13 @@ cloudLayer =
 {join,
   {tint,
     {0.2, 0.38, 0.86},
-    {simplex},
+    {simplex, 0.1},
   },
   {tint,
     {0.1, 0.53, 0.65},
     {linear,
       {0, -0.12, 0, 1, 1},
-      {simplex},
+      {simplex, 0.1},
     },
   }
 }

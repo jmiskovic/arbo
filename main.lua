@@ -4,7 +4,6 @@ local TGF = require('TGF')
 
 require('nodes')
 
-
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
@@ -138,8 +137,8 @@ function love.draw()
   rayCount = renderer:draw(scene)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
-  love.graphics.setColor(0, 1, 1)
-  --love.graphics.print(rayCount / 1000)
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.print(rayCount / 1000 .. ' ' .. love.timer.getFPS())
 end
 
 function love.load()

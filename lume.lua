@@ -797,7 +797,7 @@ function lume.hsl(h, s, l, a)
   a = a or 1
   -- hsl to rgb, input and output range: 0 - 1
   if s<=0 then
-    return l,l,l
+    return l,l,l,a
   end
   h = h * 6
   local c = (1-math.abs(2*l-1))*s

@@ -15,10 +15,9 @@ function module.new(width, height)
 end
 
 function module:draw(scene)
-  local white = {1, 1, 1}
   local t = love.timer.getTime()
   local frames = 0
-  local size = 20 + 50 * love.mouse.getY() / love.graphics.getHeight()
+  local size = 10 + 40 * love.mouse.getY() / love.graphics.getHeight()
   -- local size =  1 + 50 * math.exp(- (love.timer.getTime() - self.lastFrameTime))
   love.graphics.push('all')
   love.graphics.setCanvas(self.canvas)
@@ -27,80 +26,77 @@ function module:draw(scene)
   while love.timer.getTime() - t < .15 do
     local x = -self.ratio + 2 * self.ratio * math.random()
     local y = -1 + 2 * math.random()
-
-    local ray = trace(scene, white, x, y)
-    --TODO: this hack makes it possible to not clear the canvas
-    if ray[4] < 0.01 then ray = {0, 0, 0, 1} end
+    local ray = trace(scene, x, y)
     love.graphics.setColor(lume.hsl(unpack(ray)))
     --love.graphics.circle('fill', x, y, math.random() * size / self.height)
     love.graphics.push()
       love.graphics.translate(x, y)
-      love.graphics.rotate(.1+math.random())
-      local d = math.random() * size / self.height
+      love.graphics.rotate(.1 + math.random())
+      local d = size / self.height
       --love.graphics.rectangle('fill', 0, 0, d, d)
-      love.graphics.ellipse('fill', 0, 0, d, d/7)
+      love.graphics.ellipse('fill', 0, 0, d, d/3, 6)
     love.graphics.pop()
     frames = frames + 1
   end
-  love.timer.sleep(.015)
+  love.timer.sleep(.05)
   love.graphics.pop()
   return frames
 end
 
-function trace(node, ray, x, y) -- returns ray color
+function trace(node, x, y) -- returns ray color
   if (not node.is) and (type(node[1]) ~= 'string') then
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node[1] == 'lhp' then
-    ray[4] = 0.5 - y * 10
-    return ray
+      return {0, 1, 1, .5 - y * 100}
   elseif node[1] == 'simplex' then
-    ray[4] = (math.exp(-(y * 1.9)^2)*noise.Simplex2D(x, y) + .1) * 1
-    return ray
+    return {0, 1, 1, math.exp(-(y * 1.9)^2) * noise.Simplex2D(x, y) + (node[2] or 0)}
   elseif node[1] == 'linear' then
-    --if not node[1] then error('transform has no subtree', node) end
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return trace(node[3], ray, x, y)
+    return trace(node[3], x, y)
   elseif node[1] == 'negate' then
-    local ray = trace(node[2], ray, x, y)
+    local ray = trace(node[2], x, y)
     ray[4] = 1 - ray[4]
     return ray
   elseif node[1] == 'union' then
-  	local ray = ray
+  	local ray
     local max = -math.huge
     for i=2, #node do
       branch = node[i]
-      ray = trace(branch, ray, x, y)
+      ray = trace(branch, x, y)
       max = math.max(max, r[4])
     end
     ray[4] = max
     return ray
   elseif node[1] == 'join' then
-  	local ray = ray
+  	local ray
     for i=2, #node do
       branch = node[i]
-      ray = trace(branch, ray, x, y)
+      ray = trace(branch, x, y)
       if ray[4] > 0.2 then break end
     end
     return ray
   elseif node[1] == 'intersect' then
-    local ray = ray
+    local ray
     local min = math.huge
     for i=2, #node do
       branch = node[i]
-      min = math.min(min, trace(branch, ray, x, y)[4])
+      ray = trace(branch, x, y)
+      min = math.min(min, ray[4])
     end
     ray[4] = min
     return ray
   elseif node[1] == 'wrap' then
     local r = (x^2 + y^2) - 1
     local a = -math.atan2(y, x) / math.pi
-    return trace(node[2], ray, a, r)
+    return trace(node[2], a, r)
   elseif node[1] == 'tint' then
-    return trace(node[3], {node[2][1], node[2][2], node[2][3], node[2][4]}, x, y)
-  --elseif node.is == 'react' then
-  --  return trace(node[1], ray, x, y)
+    local ray = trace(node[3], x, y)
+    ray[1] = node[2][1]
+    ray[2] = node[2][2]
+    ray[3] = node[2][3]
+    return ray
   else
     error('unrecognized type', node)
     return {1, 1, 1, 0}

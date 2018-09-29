@@ -1,52 +1,49 @@
 local lume = require('lume')
 require('nodes')
 
+local count = 20
+
 local ray =
   {linear,
     {0, 0, 0, .2, .2},
     {intersect,
       {linear,
-        {0, -.7, .5, .01, .01},
+        {0, 0, .5 - 1/count/2},
         {lhp},
       },
       {linear,
-        {0,  .7, 0, .01, .01},
+        {0, 0, 0 + 1/count/2},
         {lhp},
+      },
+      {negate,
+        {wrap,
+          {lhp},
+        },
       },
     },
   }
 
 local rays = {join}
 
-local count = 6
 for i=1,count do
   table.insert(rays,
     {tint,
       {i/count, .75, .6},
       {linear,
-        {0, 0, .5 / count * i},
+        {0, 0, 1 / count * i},
         ray,
       },
     }
   )
 end
 
-return
+local scene =
 {linear,
   {0, 0, 0,},
-  {join,
-    {tint,
-      {0,0,0},
-      {wrap,
-        {linear,
-          {0, -.92, 0, .01, .01},
-          {lhp},
-        }
-      },
-    },
-    rays,
-  },
+  rays,
   update= function(scene, dt, t)
-    scene[2][3] = t / 100
+    scene[2][3] = -t / 200
   end
 }
+
+return scene
