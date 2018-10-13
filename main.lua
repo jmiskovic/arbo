@@ -1,5 +1,5 @@
 local lume = require('lume')
-local scene = require('scenes/sunset')
+local scene = require('scenes/edg32')
 local TGF = require('TGF')
 
 require('nodes')
@@ -7,7 +7,7 @@ require('nodes')
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
-
+local editor = require('editor').new(sw, sh, scene)
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
 nodeTransforms = {}
@@ -105,12 +105,23 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
   love.mousereleased(x, y, 1, true, 1)
 end
 
-function love.touchmoved(id, x, y, dx, dy, pressure)
-  love.mouse.setPosition(x, y)
+function love.mousemoved(x, y, dx, dy, istouch)
+  if love.mouse.isDown(1) then
+    editor:touchmoved(nil, x, y, dx, dy, 1)
+  end
 end
 
+function love.touchmoved(id, x, y, dx, dy, pressure)
+  love.mouse.setPosition(x, y)
+  editor:touchmoved(id, x, y, dx, dy, pressure)
+end
 
+local errorPrinted = false
 function error(msg, node)
+  if errorPrinted then
+    return
+  end
+  errorPrinted = true
   print(msg)
   if node then
     print('node is', node[1])
@@ -128,19 +139,29 @@ local time = datetime.hour * 3600 + datetime.min * 60 + datetime.sec
 function love.update(dt)
   time = time + dt
   if scene.update then scene.update(scene, dt, time) end
+  editor:update(dt)
   updateTransforms(scene)
+
 end
 
 function love.draw()
   local white = {1, 1, 1}
   local rayCount = 0
-  rayCount = renderer:draw(scene)
+  rayCount = renderer:draw(scene, .05)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
-  love.graphics.setColor(1, 1, 1)
-  love.graphics.print(rayCount / 1000 .. ' ' .. love.timer.getFPS())
+  editor:draw()
+  love.timer.sleep(.05)
+  --love.graphics.setColor(1, 1, 1)
+  --love.graphics.print(string.format('%.1fk %d fps', rayCount / 1000, love.timer.getFPS()))
 end
 
 function love.load()
   --TGF.export(scene)
+end
+
+function love.keypressed(key)
+  if key == 'escape' then
+    love.event.quit()
+  end
 end

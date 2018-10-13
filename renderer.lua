@@ -14,16 +14,16 @@ function module.new(width, height)
   return instance
 end
 
-function module:draw(scene)
+function module:draw(scene, duration)
   local t = love.timer.getTime()
   local frames = 0
-  local size = 10 + 40 * love.mouse.getY() / love.graphics.getHeight()
+  local size = 35 - 30 * love.mouse.getY() / love.graphics.getHeight()
   -- local size =  1 + 50 * math.exp(- (love.timer.getTime() - self.lastFrameTime))
   love.graphics.push('all')
   love.graphics.setCanvas(self.canvas)
   love.graphics.translate(self.width/2, self.height/2)
   love.graphics.scale(self.height/2, -self.height/2)
-  while love.timer.getTime() - t < .15 do
+  while love.timer.getTime() - t < duration do
     local x = -self.ratio + 2 * self.ratio * math.random()
     local y = -1 + 2 * math.random()
     local ray = trace(scene, x, y)
@@ -38,7 +38,6 @@ function module:draw(scene)
     love.graphics.pop()
     frames = frames + 1
   end
-  love.timer.sleep(.05)
   love.graphics.pop()
   return frames
 end
