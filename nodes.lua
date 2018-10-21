@@ -18,3 +18,5 @@ negate    = 'negate'
 union     = 'union'
 -- {set, table_index, new_value}
 set       = 'set'
+-- {memo, arbo}
+memo      = 'memo'

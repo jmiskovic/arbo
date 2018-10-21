@@ -3,13 +3,12 @@ local module = {}
 local lume = require('lume')
 local noise = require('noise')
 
-
 function module.new(width, height)
   local instance = setmetatable({}, {__index=module})
   instance.canvas = love.graphics.newCanvas(width, height)
   instance.width = width
-  instance.lastFrameTime = love.timer.getTime()
   instance.height = height
+  instance.lastFrameTime = love.timer.getTime()
   instance.ratio = width / height -- should be around 1.7 to 2.1, typically 16/9 = 1.77
   return instance
 end
@@ -17,8 +16,7 @@ end
 function module:draw(scene, duration)
   local t = love.timer.getTime()
   local frames = 0
-  local size = 35 - 30 * love.mouse.getY() / love.graphics.getHeight()
-  -- local size =  1 + 50 * math.exp(- (love.timer.getTime() - self.lastFrameTime))
+
   love.graphics.push('all')
   love.graphics.setCanvas(self.canvas)
   love.graphics.translate(self.width/2, self.height/2)
@@ -27,12 +25,14 @@ function module:draw(scene, duration)
     local x = -self.ratio + 2 * self.ratio * math.random()
     local y = -1 + 2 * math.random()
     local ray = trace(scene, x, y)
-    love.graphics.setColor(lume.hsl(unpack(ray)))
-    --love.graphics.circle('fill', x, y, math.random() * size / self.height)
+    local h, s, l, a, stroke = unpack(ray)
+    love.graphics.setColor(lume.hsl(h, s, l, a))
+    stroke = stroke or 15
+    --love.graphics.circle('fill', x, y, math.random() * stroke / self.height)
     love.graphics.push()
       love.graphics.translate(x, y)
       love.graphics.rotate(.1 + math.random())
-      local d = size / self.height
+      local d = stroke / self.height
       --love.graphics.rectangle('fill', 0, 0, d, d)
       love.graphics.ellipse('fill', 0, 0, d, d/3, 6)
     love.graphics.pop()
@@ -42,6 +42,19 @@ function module:draw(scene, duration)
   return frames
 end
 
+local memos = {}
+function memoLookup(node, precision, x, y)
+  memos[node] = memos[node] or {}
+  local memo = memos[node]
+  local xg, yg = x - (x % precision), y - (y % precision)
+  memo[xg] = memo[xg] or {}
+  if not memo[xg][yg] then
+    memo[xg][yg] = trace(node[3], x, y)
+  end
+  return memo[xg][yg]
+
+end
+
 function trace(node, x, y) -- returns ray color
   if (not node.is) and (type(node[1]) ~= 'string') then
     error('node has no type?!', node)
@@ -49,7 +62,9 @@ function trace(node, x, y) -- returns ray color
   elseif node[1] == 'lhp' then
       return {0, 1, 1, .5 - y * 100}
   elseif node[1] == 'simplex' then
-    return {0, 1, 1, math.exp(-(y * 1.9)^2) * noise.Simplex2D(x, y) + (node[2] or 0)}
+    return {0, 1, 1,
+    math.exp(-(y * 1.9)^2) * noise.Simplex2D(x, y) + (node[2] or 0)}
+    --noise.Simplex2D(x, y) + (node[2] or 0)}
   elseif node[1] == 'linear' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
@@ -92,10 +107,15 @@ function trace(node, x, y) -- returns ray color
     return trace(node[2], a, r)
   elseif node[1] == 'tint' then
     local ray = trace(node[3], x, y)
+    -- hsl
     ray[1] = node[2][1]
     ray[2] = node[2][2]
     ray[3] = node[2][3]
+    -- stroke size
+    ray[5] = node[2][4]
     return ray
+  elseif node[1] == 'memo' then
+    return memoLookup(node, node[2], x, y)
   else
     error('unrecognized type', node)
     return {1, 1, 1, 0}

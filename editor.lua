@@ -95,9 +95,9 @@ function module:draw()
   local colWidth = self.width / 4
   local rowHeight = font:getHeight()
   love.graphics.push('all')
-    love.graphics.setColor(lume.hsl(0.91, 0.41, 0.51, 0.50))
-    love.graphics.rectangle('fill', self.width / 2 - colWidth * .2, self.height / 2 - rowHeight/2, colWidth, rowHeight)
-    love.graphics.rectangle('fill', 0, self.height / 2 - rowHeight/2, self.width, rowHeight)
+    love.graphics.setColor(lume.hsl(0.91, 0.41, 0.51, 0.20))
+    love.graphics.rectangle('fill', self.width / 2 - colWidth * .2, self.height / 2 - rowHeight * .65, colWidth, rowHeight)
+    --love.graphics.rectangle('fill', 0, self.height / 2 - rowHeight  * .65, self.width, rowHeight)
     love.graphics.setColor(lume.hsl(0.07, 0.64, 0.75, 1.00))
     love.graphics.setFont(font)
     love.graphics.translate(self.width / 2 -  (self.selected - 1) * colWidth, self.height / 2 + rowHeight)
@@ -115,35 +115,52 @@ function module:update(dt)
   local colWidth = self.width / 4
   local cursor, target
   -- align columns and rows to grid
+  local colSelected = self.columns[math.floor(self.selected + .5)]
   if not love.mouse.isDown(1) and #love.touch.getTouches() == 0 then
     cursor = self.selected
     target = math.floor(cursor + .5)
     self.selected = cursor + (target - cursor) * 5 * dt
-    local selColumn = self.columns[math.floor(self.selected + .5)]
-    if selColumn then
-      cursor = selColumn.selected
+    if colSelected then
+      cursor = colSelected.selected
       target = math.floor(cursor + .5)
-      selColumn.selected = cursor + (target - cursor) * 2 * dt
+      colSelected.selected = cursor + (target - cursor) * 2 * dt
     end
   end
   -- recalculate column contents
   for i, column in ipairs(self.columns) do
-    local colSelected = math.floor(column.selected + .5)
-    if type(column.tree[colSelected]) == 'table' then
+    local rowSelected = math.floor(column.selected + .5)
+    if type(column.tree[rowSelected]) == 'table' then
       if not self.columns[i+1] then
-        self.columns[i+1] = newColumn(column.tree[colSelected])
+        self.columns[i+1] = newColumn(column.tree[rowSelected])
       else
-        if self.columns[i+1].tree ~= column.tree[colSelected] then
+        if self.columns[i+1].tree ~= column.tree[rowSelected] then
           self.columns[i+1].selected = 1
         end
-        self.columns[i+1].tree = column.tree[colSelected]
+        self.columns[i+1].tree = column.tree[rowSelected]
       end
+    elseif type(column.tree[rowSelected]) == 'number' then
+      if not self.columns[i+1] then
+        self.columns[i+1] = newColumn({})
+        self.columns[i+1].selected = 2
+      end
+      self.columns[i+1].tree = {'  +', column.tree[rowSelected], '  -'}
+      self.columns[i+2] = nil
+      break -- no more columns after this one
     else
       self.columns[i+1] = nil
       break
     end
     if i ~= math.floor(self.selected + .5) then
-      column.selected = colSelected
+      column.selected = rowSelected
+    end
+  end
+  -- propagate set value to column on the left
+  local colSelected = self.columns[math.floor(self.selected + .5)]
+  local leftOfSelected = self.columns[math.floor(self.selected - .5)]
+  if leftOfSelected and leftOfSelected.tree then
+    local row = math.floor(leftOfSelected.selected + .5)
+    if type(leftOfSelected.tree[row]) == 'number' then
+      leftOfSelected.tree[row] = leftOfSelected.tree[row] + dt * (2 - colSelected.selected) / 50
     end
   end
 end
@@ -151,9 +168,9 @@ end
 function module:touchmoved(id, x, y, dx, dy, pressure)
   if math.abs(dx) > 30 or math.abs(dy) > 30 then return end
   self.selected = self.selected - dx / 350
-  local selColumn = self.columns[math.floor(self.selected + .5)]
-  if selColumn then
-    selColumn.selected = selColumn.selected - dy / 100
+  local colSelected = self.columns[math.floor(self.selected + .5)]
+  if colSelected then
+    colSelected.selected = colSelected.selected - dy / 100
   end
   --self.y = self.y + dy
 end
