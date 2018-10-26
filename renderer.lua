@@ -10,6 +10,7 @@ function module.new(width, height)
   instance.height = height
   instance.lastFrameTime = love.timer.getTime()
   instance.ratio = width / height -- should be around 1.7 to 2.1, typically 16/9 = 1.77
+  instance.stroke = 15
   return instance
 end
 
@@ -25,14 +26,13 @@ function module:draw(scene, duration)
     local x = -self.ratio + 2 * self.ratio * math.random()
     local y = -1 + 2 * math.random()
     local ray = trace(scene, x, y)
-    local h, s, l, a, stroke = unpack(ray)
+    local h, s, l, a = unpack(ray)
     love.graphics.setColor(lume.hsl(h, s, l, a))
-    stroke = stroke or 15
     --love.graphics.circle('fill', x, y, math.random() * stroke / self.height)
     love.graphics.push()
       love.graphics.translate(x, y)
       love.graphics.rotate(.1 + math.random())
-      local d = stroke / self.height
+      local d = self.stroke / self.height
       --love.graphics.rectangle('fill', 0, 0, d, d)
       love.graphics.ellipse('fill', 0, 0, d, d/3, 6)
     love.graphics.pop()
@@ -44,18 +44,24 @@ end
 
 local memos = {}
 function memoLookup(node, precision, x, y)
+  xd = x + precision * (math.random() - .5)
+  yd = y + precision * (math.random() - .5)
   memos[node] = memos[node] or {}
   local memo = memos[node]
-  local xg, yg = x - (x % precision), y - (y % precision)
+  local xg, yg = xd - (xd % precision), yd - (yd % precision)
   memo[xg] = memo[xg] or {}
   if not memo[xg][yg] then
-    memo[xg][yg] = trace(node[3], x, y)
+    xg, yg = x - (x % precision), y - (y % precision)
+    memo[xg] = memo[xg] or {}
+    memo[xg][yg] = trace(node[3], xg, yg)
   end
   return memo[xg][yg]
 
 end
 
 function trace(node, x, y) -- returns ray color
+  if debug.getinfo(18) then return {0, 1, 1, 0} end
+
   if (not node.is) and (type(node[1]) ~= 'string') then
     error('node has no type?!', node)
     return {1, 1, 1, 0}
@@ -63,8 +69,8 @@ function trace(node, x, y) -- returns ray color
       return {0, 1, 1, .5 - y * 100}
   elseif node[1] == 'simplex' then
     return {0, 1, 1,
-    math.exp(-(y * 1.9)^2) * noise.Simplex2D(x, y) + (node[2] or 0)}
-    --noise.Simplex2D(x, y) + (node[2] or 0)}
+    noise.Simplex2D(x, y) + (node[2] or 0)}
+    --math.exp(-(y * 1.9)^2) * noise.Simplex2D(x, y) + (node[2] or 0)}
   elseif node[1] == 'linear' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)

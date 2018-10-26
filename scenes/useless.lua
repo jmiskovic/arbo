@@ -31,7 +31,7 @@ local leverShape =
 local lever =
 {linear,
   {0, -.35, .25 - .5/6,
-      react = {
+    react = {
       {
         case= {active= 1},
         name= 'off',
@@ -82,9 +82,4 @@ return
       {lhp},
     },
   },
-
-  update = function(scene, dt, t)
-    --scene[3][2][3] = .25 - .5/6 * math.atan(20 * math.sin(t))
-    --print(scene[2].active)
-  end
 }

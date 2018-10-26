@@ -116,6 +116,9 @@ local touches = {}
 function love.touchmoved(id, x, y, dx, dy, pressure)
   love.mouse.setPosition(x, y)
   editor:touchmoved(id, x, y, dx, dy, pressure)
+  if love.keyboard.isDown('lshift') then
+    renderer.stroke = math.max(5, renderer.stroke + 50 * dy / sh)
+  end
   touches[id] = {x, y, dx, dy}
 end
 
@@ -151,6 +154,9 @@ function love.update(dt)
     pinchGesture()
   end
   updateTransforms(camera)
+  if #love.touch.getTouches() == 0 then
+    love.timer.sleep(.02)
+  end
 end
 
 local frames = 1000
@@ -161,10 +167,9 @@ function love.draw()
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
   editor:draw()
-  love.timer.sleep(.02)
   love.graphics.setColor(1, 1, 1)
   frames = .99 * frames + .01 * rayCount
-  love.graphics.print(string.format('%.1fk %d fps', frames / 1000, love.timer.getFPS()))
+  love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / 1000, love.timer.getFPS(), renderer.stroke))
 end
 
 function love.load()
