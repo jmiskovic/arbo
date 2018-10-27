@@ -12,8 +12,11 @@ function module.new(width, height, scene)
       selected = 1,
       columns = {},
       parents = {},
+      scene = scene,
     }, {__index=module})
-  font = love.graphics.newFont('fonts/coolstory.ttf', height / 12)
+  font = love.graphics.newFont('fonts/coolstory.ttf', width / 20)
+  instance.colWidth = width / 5
+  instance.rowHeight = font:getHeight()
   updateParents(scene, instance.parents)
   instance.columns[1] = newColumn(scene)
   return instance
@@ -50,30 +53,12 @@ function drawLabel(node)
   love.graphics.print(node[1], 50, 50)
 end
 
---module:drawTint({0, {0, .5, .5, .4}})
-function module:drawTint(node)
-  love.graphics.push()
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle('fill', -1, -1, 2, 2)
-    --love.graphics.setColor(1,1,1)
-    --love.graphics.rectangle('fill', -1, -1, 1, 1)
-    --love.graphics.rectangle('fill', 0, 0, 1, 1)
-    love.graphics.setColor(lume.hsl(unpack(node[2])))
-    love.graphics.rectangle('fill', -1, -1, 2, 2)
-  love.graphics.pop()
-end
-
-
-
 function module:drawColumn(column)
-  local rowHeight = font:getHeight()
   local s = ''
-  love.graphics.translate(0, -column.selected * rowHeight)
+  love.graphics.translate(0, -column.selected * self.rowHeight)
   for i,item in ipairs(column.tree) do
     -- select color
     local fg
-
-
 
     if column == self.columns[math.floor(self.selected + .5)] then
       if i == math.floor(column.selected + .5) then
@@ -90,13 +75,18 @@ function module:drawColumn(column)
       s = string.format('  %s', type(item[1]) == 'string' and item[1] or '')
       if type(item) == 'table' then
         love.graphics.push('all')
-        love.graphics.scale(1, .5)
-        love.graphics.setLineWidth(rowHeight / 10)
-        love.graphics.translate(font:getWidth(' '), -rowHeight/2)
-        local span = rowHeight / #item
-        love.graphics.setColor(fg)
-        for i=1,#item do
-          love.graphics.line(0, span / 5, font:getWidth(' ')/2, (i - 1) * span)
+        if item[1] == 'tint' then
+          love.graphics.setColor(lume.hsl(unpack(item[2])))
+          love.graphics.rectangle('fill', 0, -self.rowHeight/2, self.rowHeight / 2, self.rowHeight)
+        else
+          love.graphics.scale(1, .5)
+          love.graphics.setLineWidth(self.rowHeight / 10)
+          love.graphics.translate(font:getWidth(' '), -self.rowHeight/2)
+          local span = self.rowHeight / #item
+          love.graphics.setColor(fg)
+          for i=1,#item do
+            love.graphics.line(0, span / 5, font:getWidth(' ')/2, (i - 1) * span)
+          end
         end
         love.graphics.pop()
       end
@@ -106,38 +96,32 @@ function module:drawColumn(column)
       s = tostring(item)
     end
     love.graphics.setColor(bg)
-    love.graphics.print(s, 0 + 2, -rowHeight / 2 + 2)
-    love.graphics.print(s, 0 - 2, -rowHeight / 2 + 2)
-    love.graphics.print(s, 0 + 2, -rowHeight / 2 - 2)
-    love.graphics.print(s, 0 - 2, -rowHeight / 2 - 2)
+    love.graphics.print(s, 0 + 2, -self.rowHeight / 2 + 2)
+    love.graphics.print(s, 0 - 2, -self.rowHeight / 2 + 2)
+    love.graphics.print(s, 0 + 2, -self.rowHeight / 2 - 2)
+    love.graphics.print(s, 0 - 2, -self.rowHeight / 2 - 2)
     love.graphics.setColor(fg)
-    love.graphics.print(s, 0, -rowHeight / 2)
-    love.graphics.translate(0, rowHeight)
+    love.graphics.print(s, 0, -self.rowHeight / 2)
+    love.graphics.translate(0, self.rowHeight)
   end
 end
 
 function module:draw()
-  local colWidth = self.width / 4
-  local rowHeight = font:getHeight()
   love.graphics.push('all')
-    --love.graphics.setColor(lume.hsl(0.91, 0.41, 0.51, 0.20))
-    --love.graphics.rectangle('fill', self.width / 2 - colWidth * .2, self.height / 2 - rowHeight * .65, colWidth, rowHeight)
-    --love.graphics.rectangle('fill', 0, self.height / 2 - rowHeight  * .65, self.width, rowHeight)
     love.graphics.setColor(lume.hsl(0.07, 0.64, 0.75, 1.00))
     love.graphics.setFont(font)
-    love.graphics.translate(self.width / 2 -  (self.selected - 1) * colWidth, self.height / 2 + rowHeight)
+    love.graphics.translate(self.width / 2 -  (self.selected - 1) * self.colWidth, self.height / 2 + self.rowHeight)
     for k,column in ipairs(self.columns) do
       love.graphics.push()
       self:drawColumn(column)
       love.graphics.pop()
-      love.graphics.translate(colWidth, 0)
+      love.graphics.translate(self.colWidth, 0)
     end
   love.graphics.pop()
   --love.graphics.print(string.format('self.selected=%2.1f #columns=%d', self.selected, #self.columns), 0,0)
 end
 
 function module:update(dt)
-  local colWidth = self.width / 4
   local cursor, target
   -- align columns and rows to grid
   local colSelected = self.columns[math.floor(self.selected + .5)]
