@@ -1,5 +1,6 @@
 require('nodes')
 local lume = require('lume')
+local persist = require('persist')
 local scene = require('scenes/useless')
 local TGF = require('TGF')
 
@@ -7,13 +8,15 @@ local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
 local editor = require('editor').new(sw, sh, scene)
-local cameraTransform = {0, 0, 0, 1, 1}
+local cameraTransform = {0, 0, 0, 1}
 local camera = {linear, cameraTransform, scene}
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
 nodeTransforms = {}
 
 local function updateTransforms(node)
+  if debug.getinfo(16) then return end
+
   if type(node) == 'table' then
     if node[1] == 'linear' then
       nodeTransforms[node] = transform:setTransformation(
@@ -157,6 +160,7 @@ function love.update(dt)
   if #love.touch.getTouches() == 0 then
     love.timer.sleep(.02)
   end
+  love.timer.sleep(.02)
 end
 
 local frames = 1000
@@ -166,18 +170,34 @@ function love.draw()
   rayCount = renderer:draw(camera, .02)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
-  editor:draw()
+  if not love.keyboard.isDown('tab') then
+    editor:draw()
+  end
   love.graphics.setColor(1, 1, 1)
-  frames = .99 * frames + .01 * rayCount
-  love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / 1000, love.timer.getFPS(), renderer.stroke))
+  --frames = .99 * frames + .01 * rayCount
+  --love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / 1000, love.timer.getFPS(), renderer.stroke))
 end
 
 function love.load()
+  love.mouse.setVisible(false)
   --TGF.export(scene)
 end
 
 function love.keypressed(key)
   if key == 'escape' then
     love.event.quit()
+  elseif key == 'f11' then
+    love.window.setFullscreen(not love.window.getFullscreen())
+  elseif key == 'f2' then
+    persist.store(scene, 'scene.lua')
+  elseif key == 'f5' then
+    loaded = persist.load('scene.lua')
+    print('loaded', loaded)
+    if loaded then
+      scene = loaded
+      editor = require('editor').new(sw, sh, scene)
+      cameraTransform = {0, 0, 0, 1, 1}
+      camera = {linear, cameraTransform, scene}
+    end
   end
 end

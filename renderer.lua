@@ -10,7 +10,7 @@ function module.new(width, height)
   instance.height = height
   instance.lastFrameTime = love.timer.getTime()
   instance.ratio = width / height -- should be around 1.7 to 2.1, typically 16/9 = 1.77
-  instance.stroke = 15
+  instance.stroke = 30 / love.graphics.getDPIScale()
   return instance
 end
 
@@ -19,6 +19,7 @@ function module:draw(scene, duration)
   local frames = 0
 
   love.graphics.push('all')
+  love.graphics.reset()
   love.graphics.setCanvas(self.canvas)
   love.graphics.translate(self.width/2, self.height/2)
   love.graphics.scale(self.height/2, -self.height/2)
@@ -46,7 +47,7 @@ local memos = {}
 function memoLookup(node, precision, x, y)
   xd = x + precision * (math.random() - .5)
   yd = y + precision * (math.random() - .5)
-  memos[node] = memos[node] or {}
+  memos[node] = memos[node] or {count = 0}
   local memo = memos[node]
   local xg, yg = xd - (xd % precision), yd - (yd % precision)
   memo[xg] = memo[xg] or {}
@@ -54,6 +55,7 @@ function memoLookup(node, precision, x, y)
     xg, yg = x - (x % precision), y - (y % precision)
     memo[xg] = memo[xg] or {}
     memo[xg][yg] = trace(node[3], xg, yg)
+    memo.count = memo.count + 1
   end
   return memo[xg][yg]
 
@@ -62,7 +64,7 @@ end
 function trace(node, x, y) -- returns ray color
   if debug.getinfo(18) then return {0, 1, 1, 0} end
 
-  if (not node.is) and (type(node[1]) ~= 'string') then
+  if type(node[1]) ~= 'string' then
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node[1] == 'lhp' then

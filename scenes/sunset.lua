@@ -33,17 +33,29 @@ sea =
 }
 
 cloudLayer =
-{join,
-  {tint,
-    {0.2, 0.38, 0.86},
-    {simplex, 0.1},
+{intersect,
+  -- limit to horizontal stripe
+  {linear,
+    {0, -.8, .5},
+    {lhp},
   },
-  {tint,
-    {0.1, 0.53, 0.65},
-    {linear,
-      {0, -0.12, 0, 1, 1},
+  {linear,
+    {0, 0.4, 0},
+    {lhp},
+  },
+  -- noise as clouds
+  {join,
+    {tint,
+      {0.2, 0.38, 0.86},
       {simplex, 0.1},
     },
+    {tint,
+      {0.1, 0.53, 0.65},
+      {linear,
+        {0, -0.12, 0, 1, 1},
+        {simplex, 0.1},
+      },
+    }
   }
 }
 
@@ -94,8 +106,8 @@ end
   end
 
 
-return
-{join,
+return {
+  join,
   clouds,
   reflection,
   sea,
@@ -118,13 +130,12 @@ return
     reflection[2][2] = .95
     reflection[2][3] = lume.remap(hour, 16, 21, .97, .4)
     -- cloud shade
-    clouds[3][2][2][1] = lume.remap(hour, 16, 21, 0.2, 0.05)
-    clouds[3][2][2][2] = lume.remap(hour, 16, 21, .38, .7)
-    clouds[3][2][2][3] = lume.remap(hour, 16, 20, .96, .3)
-
-    clouds[3][3][2][1] = lume.remap(hour, 16, 21, 0.1, 0.02)
-    clouds[3][3][2][2] = lume.remap(hour, 16, 21, .53, .6)
-    clouds[3][3][2][3] = lume.remap(hour, 16, 20, .65, .4)
+    clouds[3][4][2][1] = lume.remap(hour, 16, 21, 0.2, 0.05)
+    clouds[3][4][2][2] = lume.remap(hour, 16, 21, .38, .7)
+    clouds[3][4][2][3] = lume.remap(hour, 16, 20, .96, .3)
+    clouds[3][4][2][1] = lume.remap(hour, 16, 21, 0.1, 0.02)
+    clouds[3][4][2][2] = lume.remap(hour, 16, 21, .53, .6)
+    clouds[3][4][2][3] = lume.remap(hour, 16, 20, .65, .4)
     -- sky shade
     sky[2][1] = lume.remap(hour, 14, 21, .17, .07)
     sky[2][2] = lume.remap(hour, 14, 21, .3, .9)

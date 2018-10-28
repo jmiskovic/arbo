@@ -19,6 +19,8 @@ function module.new(width, height, scene)
   instance.rowHeight = font:getHeight()
   updateParents(scene, instance.parents)
   instance.columns[1] = newColumn(scene)
+  instance.renderer = require('renderer').new(instance.colWidth, instance.colWidth)
+  instance.renderer.stroke = 10 --instance.colWidth / 50
   return instance
 end
 
@@ -44,7 +46,9 @@ function updateParents(node, parents)
           table.insert(parents[child], node)
         end
       end
-      updateParents(child, parents)
+      if debug.getinfo(15) then
+        updateParents(child, parents)
+      end
     end
   end
 end
@@ -53,23 +57,32 @@ function drawLabel(node)
   love.graphics.print(node[1], 50, 50)
 end
 
-function module:drawColumn(column)
+function module:drawColumn(column, isSelected)
   local s = ''
   love.graphics.translate(0, -column.selected * self.rowHeight)
+  if isSelected and type(column.tree[1]) == 'string' then
+    love.graphics.push()
+    love.graphics.translate(0, -self.colWidth -self.rowHeight)
+    self.renderer:draw(column.tree, .02)
+    love.graphics.setColor(1,1,1)
+    love.graphics.draw(self.renderer.canvas)
+    love.graphics.pop()
+  end
+
   for i,item in ipairs(column.tree) do
     -- select color
     local fg
 
-    if column == self.columns[math.floor(self.selected + .5)] then
+    if isSelected then
       if i == math.floor(column.selected + .5) then
-        fg = {lume.hsl(0.36, 0.38, 0.39)}
+        fg = {lume.hsl(0.05, 0.42, 0.52, 1.00)}
       else
-        fg = {lume.hsl(0.42, 0.42, 0.25)}
+        fg = {lume.hsl(0.02, 0.34, 0.34, 1.00)}
       end
     else
-      fg = {lume.hsl(0.51, 0.43, 0.17)}
+      fg = {lume.hsl(0.93, 0.22, 0.20, 1.00)}
     end
-    local bg = {fg[1] * .6, fg[2] * .6, fg[3] * .6}
+    local bg = {fg[1] * .3, fg[2] * .3, fg[3] * .3}
 
     if type(item) == 'table' then
       s = string.format('  %s', type(item[1]) == 'string' and item[1] or '')
@@ -77,7 +90,7 @@ function module:drawColumn(column)
         love.graphics.push('all')
         if item[1] == 'tint' then
           love.graphics.setColor(lume.hsl(unpack(item[2])))
-          love.graphics.rectangle('fill', 0, -self.rowHeight/2, self.rowHeight / 2, self.rowHeight)
+          love.graphics.rectangle('fill', 0, -self.rowHeight / 4, self.rowHeight / 2, self.rowHeight / 2)
         else
           love.graphics.scale(1, .5)
           love.graphics.setLineWidth(self.rowHeight / 10)
@@ -96,10 +109,10 @@ function module:drawColumn(column)
       s = tostring(item)
     end
     love.graphics.setColor(bg)
-    love.graphics.print(s, 0 + 2, -self.rowHeight / 2 + 2)
-    love.graphics.print(s, 0 - 2, -self.rowHeight / 2 + 2)
-    love.graphics.print(s, 0 + 2, -self.rowHeight / 2 - 2)
-    love.graphics.print(s, 0 - 2, -self.rowHeight / 2 - 2)
+    love.graphics.print(s, 0 + self.rowHeight / 50, -self.rowHeight / 2 + self.rowHeight / 50)
+    love.graphics.print(s, 0 - self.rowHeight / 50, -self.rowHeight / 2 + self.rowHeight / 50)
+    love.graphics.print(s, 0 + self.rowHeight / 50, -self.rowHeight / 2 - self.rowHeight / 50)
+    love.graphics.print(s, 0 - self.rowHeight / 50, -self.rowHeight / 2 - self.rowHeight / 50)
     love.graphics.setColor(fg)
     love.graphics.print(s, 0, -self.rowHeight / 2)
     love.graphics.translate(0, self.rowHeight)
@@ -113,7 +126,8 @@ function module:draw()
     love.graphics.translate(self.width / 2 -  (self.selected - 1) * self.colWidth, self.height / 2 + self.rowHeight)
     for k,column in ipairs(self.columns) do
       love.graphics.push()
-      self:drawColumn(column)
+
+      self:drawColumn(column, column == self.columns[math.floor(self.selected + .5)])
       love.graphics.pop()
       love.graphics.translate(self.colWidth, 0)
     end
@@ -152,7 +166,7 @@ function module:update(dt)
         self.columns[i+1] = newColumn({})
         self.columns[i+1].selected = 2
       end
-      self.columns[i+1].tree = {'  +', column.tree[rowSelected], '  -'}
+      self.columns[i+1].tree = {' +', '---', ' -'}
       self.columns[i+2] = nil
       break -- no more columns after this one
     else
@@ -180,8 +194,8 @@ function module:touchmoved(id, x, y, dx, dy, pressure)
   local colSelected = self.columns[math.floor(self.selected + .5)]
   if colSelected then
     colSelected.selected = colSelected.selected - dy / 100
+    self.renderer:draw({'tint', {0, 0, 0}, {'linear', {0, 5}, {'lhp'}}}, .001)
   end
-  --self.y = self.y + dy
 end
 
 return module
