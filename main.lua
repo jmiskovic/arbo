@@ -7,12 +7,13 @@ local TGF = require('TGF')
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
+local treeverse = require('treeverse')
 local editor = require('editor').new(sw, sh, scene)
 local cameraTransform = {0, 0, 0, 1}
 local camera = {linear, cameraTransform, scene}
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
-nodeTransforms = {}
+local nodeTransforms = {}
 
 local function updateTransforms(node)
   if debug.getinfo(16) then return end
@@ -34,10 +35,10 @@ local function updateTransforms(node)
 end
 
 function getTransform(node)
-    if not nodeTransforms[node] then
-      updateTransforms(node)
-    end
-    return nodeTransforms[node]
+  if not nodeTransforms[node] then
+    updateTransforms(node)
+  end
+  return nodeTransforms[node]
 end
 
 function interact(node, x, y)
@@ -102,7 +103,7 @@ function love.mousereleased(x, y, button, istouch, presses)
   -- transform:setTransformation(unpack(...)):inverse()
   local t = transform:setTransformation(sw/2, sh/2, 0, sh/2, -sh/2):inverse()
   x, y = t:transformPoint(x, y)
-  interact(camera, x, y)
+  --interact(camera, x, y)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
@@ -112,15 +113,18 @@ end
 function love.mousemoved(x, y, dx, dy, istouch)
   if love.mouse.isDown(1) then
     editor:touchmoved(nil, x, y, dx, dy, 1)
+    treeverse.touchmoved(nil, x, y, dx, dy, 1)
   end
 end
 
 local touches = {}
 function love.touchmoved(id, x, y, dx, dy, pressure)
   love.mouse.setPosition(x, y)
-  editor:touchmoved(id, x, y, dx, dy, pressure)
-  if love.keyboard.isDown('lshift') then
-    renderer.stroke = math.max(5, renderer.stroke + 50 * dy / sh)
+  if #love.touch.getTouches() == 1 then
+    editor:touchmoved(id, x, y, dx, dy, pressure)
+    treeverse.touchmoved(id, x, y, dx, dy, pressure)
+  elseif #love.touch.getTouches() == 3 then
+    renderer.stroke = math.max(5, renderer.stroke + 10 * dy / sh)
   end
   touches[id] = {x, y, dx, dy}
 end
@@ -143,19 +147,14 @@ function error(msg, node)
   end
 end
 
-local function pinchGesture()
-end
-
 local datetime = os.date('*t')
 local time = datetime.hour * 3600 + datetime.min * 60 + datetime.sec
 
 function love.update(dt)
   time = time + dt
   if scene.update then scene.update(scene, dt, time) end
+  treeverse.update(dt)
   editor:update(dt)
-  if #love.touch.getTouches() == 2 then
-    pinchGesture()
-  end
   updateTransforms(camera)
   if #love.touch.getTouches() == 0 then
     love.timer.sleep(.02)
@@ -167,15 +166,16 @@ local frames = 1000
 function love.draw()
   local white = {1, 1, 1}
   local rayCount = 0
-  rayCount = renderer:draw(camera, .02)
+  rayCount = renderer:draw(scene, .02)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
-  if not love.keyboard.isDown('tab') then
+  if #love.touch.getTouches() == 1 then
+    treeverse.draw()
     editor:draw()
+    --love.graphics.setColor(1, 1, 1)
+    --frames = .96 * frames + .04 * rayCount
+    --love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / 1000, love.timer.getFPS(), renderer.stroke))
   end
-  love.graphics.setColor(1, 1, 1)
-  --frames = .99 * frames + .01 * rayCount
-  --love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / 1000, love.timer.getFPS(), renderer.stroke))
 end
 
 function love.load()

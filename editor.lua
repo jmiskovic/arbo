@@ -89,7 +89,8 @@ function module:drawColumn(column, isSelected)
       if type(item) == 'table' then
         love.graphics.push('all')
         if item[1] == 'tint' then
-          love.graphics.setColor(lume.hsl(unpack(item[2])))
+          local color = {item[2][1] or 0, item[2][2] or 0, item[2][3] or 0, item[2][4] or 0}
+          love.graphics.setColor(lume.hsl(unpack(color)))
           love.graphics.rectangle('fill', 0, -self.rowHeight / 4, self.rowHeight / 2, self.rowHeight / 2)
         else
           love.graphics.scale(1, .5)
@@ -104,7 +105,9 @@ function module:drawColumn(column, isSelected)
         love.graphics.pop()
       end
     elseif type(item) == 'number' then
-      s = string.format('%+1.2f', item)
+      s = string.format('%+1.4f', item)
+    elseif type(item) == nil then
+      s = string.format('nil')
     else
       s = tostring(item)
     end
@@ -157,7 +160,7 @@ function module:update(dt)
         self.columns[i+1] = newColumn(column.tree[rowSelected])
       else
         if self.columns[i+1].tree ~= column.tree[rowSelected] then
-          self.columns[i+1].selected = 1
+          self.columns[i+1].selected = 2
         end
         self.columns[i+1].tree = column.tree[rowSelected]
       end
@@ -166,7 +169,7 @@ function module:update(dt)
         self.columns[i+1] = newColumn({})
         self.columns[i+1].selected = 2
       end
-      self.columns[i+1].tree = {' +', '---', ' -'}
+      self.columns[i+1].tree = {' +', '', ' -'}
       self.columns[i+2] = nil
       break -- no more columns after this one
     else
@@ -182,19 +185,31 @@ function module:update(dt)
   local leftOfSelected = self.columns[math.floor(self.selected - .5)]
   if leftOfSelected and leftOfSelected.tree then
     local row = math.floor(leftOfSelected.selected + .5)
-    if type(leftOfSelected.tree[row]) == 'number' then
-      leftOfSelected.tree[row] = leftOfSelected.tree[row] + dt * (2 - colSelected.selected) / 50
+    if type(leftOfSelected.tree[row]) == 'number' and math.abs(2 - colSelected.selected) > .05 then
+      local delta = dt * 2^(math.abs(2 - colSelected.selected)) / 500 * (2 - colSelected.selected) / math.abs(2 - colSelected.selected)
+      leftOfSelected.tree[row] = leftOfSelected.tree[row] + delta
+      --print(delta, leftOfSelected.tree[row])
     end
   end
 end
 
 function module:touchmoved(id, x, y, dx, dy, pressure)
   if math.abs(dx) > 30 or math.abs(dy) > 30 then return end
-  self.selected = self.selected - dx / 350
+  self.selected = self.selected - 5 * dx / self.width
   local colSelected = self.columns[math.floor(self.selected + .5)]
   if colSelected then
-    colSelected.selected = colSelected.selected - dy / 100
-    self.renderer:draw({'tint', {0, 0, 0}, {'linear', {0, 5}, {'lhp'}}}, .001)
+    colSelected.selected = colSelected.selected - 8 * dy / self.height
+    if math.floor(self.selected + 5 * dx / self.width + .5) ~= math.floor(self.selected + .5) then
+      love.graphics.setBlendMode('replace')
+      love.graphics.setCanvas(self.renderer.canvas)
+      love.graphics.setColor(0,0,0,0)
+      love.graphics.rectangle('fill', 0, 0, self.renderer.width, self.renderer.height)
+      --self.renderer.stroke = self.renderer.stroke * 100
+      --self.renderer:draw({'tint', {0, 0, 0, 0}, {'linear', {0, 100}, {'lhp'}}}, .01)
+      --self.renderer.stroke = self.renderer.stroke / 100
+      love.graphics.setCanvas()
+      love.graphics.setBlendMode('alpha')
+    end
   end
 end
 
