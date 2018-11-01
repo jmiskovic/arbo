@@ -1,17 +1,17 @@
--- {linear, {dx, dy, rot, sx, sy, ox, oy, kx, ky}, arbo}
-linear    = 'linear'
--- {intersect, arbo1, arbo2, ...}
-intersect = 'intersect'
--- {lhp}
-lhp       = 'lhp'
--- {join, arbo1, arbo2, ...}
-join      = 'join'
--- {tint, {h, s. l}, arbo}
+-- {edge, level, steepness}
+edge      = 'edge'
+-- {simplex, level, steepness}
+simplex   = 'simplex'
+-- {position, {dx, dy, rot, sx, sy, ox, oy, kx, ky}, arbo}
+position  = 'position'
+-- {clip, arbo1, arbo2, ...}
+clip = 'clip'
+-- {combine, arbo1, arbo2, ...}
+combine      = 'combine'
+-- {tint, {hue, saturation, lightness}, arbo}
 tint      = 'tint'
 -- {wrap, arbo}
 wrap      = 'wrap'
--- {simplex}
-simplex   = 'simplex'
 -- {negate, arbo}
 negate    = 'negate'
 -- {union, arbo1, arbo2, ...}

@@ -2,34 +2,34 @@ local lume = require('lume')
 require('nodes')
 
 local leverShape =
-{join,
-  {intersect,
-    {linear,
+{combine,
+  {clip,
+    {position,
       {0, -.1, .5 - .016, .01, .01},
-      {lhp},
+      {edge},
     },
-    {linear,
+    {position,
       {0,  .1, .016, .01, .01},
-      {lhp},
+      {edge},
     },
     {wrap,
-      {lhp}
+      {edge}
     },
-    {linear,
+    {position,
       {0, 0, .25},
-      {lhp},
+      {edge},
     }
   },
-  {linear,
+  {position,
     {1, 0, 0, .2, .2},
     {wrap,
-      {lhp}
+      {edge}
     },
   }
 }
 
 local lever =
-{linear,
+{position,
   {0, -.35, .25 - .5/6,
     react = {
       {
@@ -47,12 +47,12 @@ local lever =
     },
     active= 0,
   },
-  {join,
+  {combine,
     {tint, -- highlight
       {0.77, 0.70, 0.57},
-      {intersect,
+      {clip,
         leverShape,
-        {linear,
+        {position,
           {-0.0, -.08, 0, .9, .9},
           leverShape,
         }
@@ -66,20 +66,20 @@ local lever =
 }
 
 return
-{join,
+{combine,
   {tint, -- the floor
     {0.72, 0.70, 0.37},
-    {linear,
+    {position,
       {0, -.3},
-      {lhp},
+      {edge},
     },
   },
   lever,       -- the lever
   {tint, -- background
     {0.75, 1.00, 0.09},
-    {linear,
+    {position,
       {0, -10, .5},
-      {lhp},
+      {edge},
     },
   },
 }

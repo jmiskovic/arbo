@@ -1,5 +1,5 @@
 do local _={
-  "linear",
+  "position",
   {
     0,
     -0.02134824227554704,
@@ -7,7 +7,7 @@ do local _={
     1
   },
   {
-    "join",
+    "combine",
     {
       "tint",
       {
@@ -16,34 +16,34 @@ do local _={
         0.92000000000000004
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
           1
         },
         {
-          "intersect",
+          "clip",
           {
-            "linear",
+            "position",
             {
               0,
               0,
               0.46875
             },
             {
-              "lhp"
+              "edge"
             }
           },
           {
-            "linear",
+            "position",
             {
               0,
               0,
               0.03125
             },
             {
-              "lhp"
+              "edge"
             }
           }
         }
@@ -57,7 +57,7 @@ do local _={
         0.71999999999999997
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -74,7 +74,7 @@ do local _={
         0.56999999999999995
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -91,7 +91,7 @@ do local _={
         0.51000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -108,7 +108,7 @@ do local _={
         0.32000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -125,7 +125,7 @@ do local _={
         0.47999999999999998
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -142,7 +142,7 @@ do local _={
         0.40000000000000002
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -159,7 +159,7 @@ do local _={
         0.23000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -176,7 +176,7 @@ do local _={
         0.65000000000000002
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -193,7 +193,7 @@ do local _={
         0.40999999999999998
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -210,7 +210,7 @@ do local _={
         0.55000000000000004
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -227,7 +227,7 @@ do local _={
         0.40999999999999998
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -244,7 +244,7 @@ do local _={
         0.48999999999999999
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -261,7 +261,7 @@ do local _={
         0.32000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -278,7 +278,7 @@ do local _={
         0.23000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -295,7 +295,7 @@ do local _={
         0.11
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -325,7 +325,7 @@ _[3][17][3][3]=_[3][2][3][3]
 return _
 end
 do local _={
-  "linear",
+  "position",
   {
     0,
     -0.02134824227554704,
@@ -333,7 +333,7 @@ do local _={
     1
   },
   {
-    "join",
+    "combine",
     {
       "tint",
       {
@@ -342,34 +342,34 @@ do local _={
         0.92000000000000004
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
           1
         },
         {
-          "intersect",
+          "clip",
           {
-            "linear",
+            "position",
             {
               0,
               0,
               0.46875
             },
             {
-              "lhp"
+              "edge"
             }
           },
           {
-            "linear",
+            "position",
             {
               0,
               0,
               0.03125
             },
             {
-              "lhp"
+              "edge"
             }
           }
         }
@@ -383,7 +383,7 @@ do local _={
         0.71999999999999997
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -400,7 +400,7 @@ do local _={
         0.56999999999999995
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -417,7 +417,7 @@ do local _={
         0.51000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -434,7 +434,7 @@ do local _={
         0.32000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -451,7 +451,7 @@ do local _={
         0.47999999999999998
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -468,7 +468,7 @@ do local _={
         0.40000000000000002
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -485,7 +485,7 @@ do local _={
         0.23000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -502,7 +502,7 @@ do local _={
         0.65000000000000002
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -519,7 +519,7 @@ do local _={
         0.40999999999999998
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -536,7 +536,7 @@ do local _={
         0.55000000000000004
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -553,7 +553,7 @@ do local _={
         0.40999999999999998
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -570,7 +570,7 @@ do local _={
         0.48999999999999999
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -587,7 +587,7 @@ do local _={
         0.32000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -604,7 +604,7 @@ do local _={
         0.23000000000000001
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,
@@ -621,7 +621,7 @@ do local _={
         0.11
       },
       {
-        "linear",
+        "position",
         {
           0,
           0,

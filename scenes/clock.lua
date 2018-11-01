@@ -2,20 +2,20 @@ local lume = require('lume')
 require('nodes')
 
 local dial =
-{linear,
+{position,
   {0, 0},
-  {intersect,
-    {linear,
+  {clip,
+    {position,
       {0, -.05, .5 + .008, .01, .01},
-      {lhp},
+      {edge},
     },
-    {linear,
+    {position,
       {0,  .05, -.008, .01, .01},
-      {lhp},
+      {edge},
     },
-    {linear,
+    {position,
       {-.3,  0, .25, .01, .01},
-      {lhp},
+      {edge},
     },
   },
 }
@@ -23,7 +23,7 @@ local dial =
 local seconds =
 { tint,
   {.55, .2, .1},
-  { linear,
+  { position,
     {0, 0, .25, 1, 1},
     dial,
   },
@@ -32,7 +32,7 @@ local seconds =
 local minutes =
 { tint,
   {.55, .2, .2},
-  {linear,
+  {position,
     {0, 0, .2, .8, .8},
     dial,
   },
@@ -41,18 +41,18 @@ local minutes =
 local hours =
 { tint,
   {.55, .2, .3},
-  {linear,
+  {position,
     {0, 0, .5, .6, .6},
     dial,
   },
 }
 
 local face =
-{ join,
+{ combine,
   { tint,
     {.15, .2, .8},
     { wrap,
-      { lhp}
+      { edge}
     },
   }
 }
@@ -60,17 +60,17 @@ local face =
 local mark =
 { tint,
   {.55, .3, .4},
-  { intersect,
-    {linear, {.9,  .04, 0}, {lhp}},
-    {linear, {.9, -.04, .5}, {lhp}},
-    {linear, {.9 - .06, 0,  .5/2}, {lhp}},
-    {linear, {.9 + .06, 0, -.5/2}, {lhp}},
+  { clip,
+    {position, {.9,  .04, 0}, {edge}},
+    {position, {.9, -.04, .5}, {edge}},
+    {position, {.9 - .06, 0,  .5/2}, {edge}},
+    {position, {.9 + .06, 0, -.5/2}, {edge}},
   },
 }
 
 for hour=1,12 do
   table.insert(face, 2,
-    { linear,
+    { position,
       {0, 0, 2 * .5 * hour / 12},
       mark,
     })
@@ -79,16 +79,16 @@ end
 local cap =
 { tint,
   {0, 0, .1},
-  { linear,
+  { position,
     {0, 0, 0, .1, .1},
     { wrap,
-      { lhp}
+      { edge}
     },
   },
 }
 
 local clock =
-{ join,
+{ combine,
   cap,
   seconds,
   minutes,

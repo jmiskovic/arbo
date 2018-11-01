@@ -4,10 +4,10 @@ require('nodes')
 local branch = {
   tint, {0.02, 0.34, 0.051, 1},
   {
-    intersect,
-    {linear, {0,   0, .52}, {lhp}},
-    {linear, {-.1, 0, .22}, {lhp}},
-    {linear, {.1,  0, .77}, {lhp}},
+    clip,
+    {position, {0,   0, .52}, {edge}},
+    {position, {-.1, 0, .22}, {edge}},
+    {position, {.1,  0, .77}, {edge}},
   }
 }
 
@@ -16,20 +16,20 @@ local tree = {
   {
     tint, {0.10, 0.95, 0.58, .07},
     {
-      join,
+      combine,
       branch,
       {
-        linear,
+        position,
         {0, .35, .1, .7},
         branch
       },
       {
-        linear,
+        position,
         {-.05, .45, -.1, .6},
         branch
       },
       {
-        linear,
+        position,
         {.01, .55, .1, .4},
         branch
       },
@@ -43,27 +43,27 @@ tree[3][3][4][3] = tree
 tree[3][3][5][3] = tree
 
 local pondShape = {
-  linear,
+  position,
   {-.4, -.52, .5, 3.2, .54},
   {
-    intersect,
+    clip,
     {
-      linear,
+      position,
       {6, -2.83, 0, 2.25},
       {simplex}
     },
-    { wrap, {lhp}},
+    { wrap, {edge}},
   }
 }
 
 
 local scene = {
-  linear,
+  position,
   {.4, -.3, 0.01, 1.1},
   {
-    join,
+    combine,
     { -- tree
-      linear,
+      position,
       {.5, -.15, 0, 1},
       tree,
     },
@@ -72,9 +72,9 @@ local scene = {
       tint,
       {.44, .26, .42, 1},
       {
-        intersect,
+        clip,
         {
-          linear, {.5, -.15, 0, 1, -.85},
+          position, {.5, -.15, 0, 1, -.85},
           tree
         },
         pondShape,
@@ -89,7 +89,7 @@ local scene = {
     {
       tint,
       {.44, .26, .42, 1},
-      {linear, {0, .03},
+      {position, {0, .03},
         pondShape
       }
     },
@@ -98,20 +98,20 @@ local scene = {
       tint,
       {0.10, 0.95, 0.58, 1.00},
       {
-        intersect,
+        clip,
         {
-          linear, {1.8, 0, -.02, 3.2, .28},
+          position, {1.8, 0, -.02, 3.2, .28},
           {simplex, 0, 50}
         },
-        {lhp}
+        {edge}
       }
     },
-    {tint, {.95, .58, .43, 1}, {lhp}},
+    {tint, {.95, .58, .43, 1}, {edge}},
 
     {tint, {0.55, .28, 0.63, 1},
-      {linear, {0, 0.05}, {lhp}},
+      {position, {0, 0.05}, {edge}},
     },
-    {tint, {0.53, .81, .37, 1.00}, {join, {linear, {0, 0, .5}, {lhp}}, {lhp}}},
+    {tint, {0.53, .81, .37, 1.00}, {combine, {position, {0, 0, .5}, {edge}}, {edge}}},
   }
 }
 
@@ -123,7 +123,7 @@ for i= 1, 0, -1 / count do
     {
       tint, {nil, .01, nil, i},
       {
-        linear,
+        position,
         {
           lume.remap(math.random(), 0, 1, -2, 2),
           -1 + i * .5,

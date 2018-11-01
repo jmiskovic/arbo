@@ -4,32 +4,32 @@ require('nodes')
 local count = 20
 
 local ray =
-  {linear,
+  {position,
     {0, 0, 0, .2, .2},
-    {intersect,
-      {linear,
+    {clip,
+      {position,
         {0, 0, .5 - 1/count/2},
-        {lhp},
+        {edge},
       },
-      {linear,
+      {position,
         {0, 0, 0 + 1/count/2},
-        {lhp},
+        {edge},
       },
       {negate,
         {wrap,
-          {lhp},
+          {edge},
         },
       },
     },
   }
 
-local rays = {join}
+local rays = {combine}
 
 for i=1,count do
   table.insert(rays,
     {tint,
       {i/count, .75, .6},
-      {linear,
+      {position,
         {0, 0, 1 / count * i},
         ray,
       },
@@ -38,7 +38,7 @@ for i=1,count do
 end
 
 local scene =
-{linear,
+{position,
   {0, 0, 0,},
   rays,
   update= function(scene, dt, t)

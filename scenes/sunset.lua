@@ -4,12 +4,12 @@ nodes = require('nodes')
 sky =
 {tint,
   {0.14, 0.5, 0.8},
-  {join,
-    {join,
-      {lhp},
-      {linear,
+  {combine,
+    {combine,
+      {edge},
+      {position,
         {0, 0, 0.5},
-        {lhp},
+        {edge},
       }
     },
   },
@@ -18,10 +18,10 @@ sky =
 sun =
 {tint,
   {0.15, 0.73, 0.97},
-  {linear,
+  {position,
     {0, 0, 0, .2},
     {wrap,
-      {lhp},
+      {edge},
     },
   },
 }
@@ -29,29 +29,29 @@ sun =
 sea =
 {tint,
   {0.58, 0.38, 0.16},
-  {lhp},
+  {edge},
 }
 
 cloudLayer =
-{intersect,
+{clip,
   -- limit to horizontal stripe
-  {linear,
+  {position,
     {0, -.8, .5},
-    {lhp},
+    {edge},
   },
-  {linear,
+  {position,
     {0, 0.4, 0},
-    {lhp},
+    {edge},
   },
   -- noise as clouds
-  {join,
+  {combine,
     {tint,
       {0.2, 0.38, 0.86},
       {simplex, 0.1},
     },
     {tint,
       {0.1, 0.53, 0.65},
-      {linear,
+      {position,
         {0, -0.12, 0, 1, 1},
         {simplex, 0.1},
       },
@@ -60,13 +60,13 @@ cloudLayer =
 }
 
 clouds =
-{linear,
+{position,
   {0, 0.2, 0, .7, .15},
   cloudLayer,
 }
 
 mirror_sun =
-{linear,
+{position,
   {0, .05, 0, 1, -1},
   sun,
 }
@@ -74,15 +74,15 @@ mirror_sun =
 reflection =
 {tint,
   {.10, .78, .35},
-  {join,
-    {intersect,
-      {linear,
+  {combine,
+    {clip,
+      {position,
         {0, 0, 0, 1, 5},
         mirror_sun,
       },
       sea,
     },
-    {linear,
+    {position,
       {0, 50, 0, 1, .06},
       mirror_sun,
     },
@@ -107,7 +107,7 @@ end
 
 
 return {
-  join,
+  combine,
   clouds,
   reflection,
   sea,

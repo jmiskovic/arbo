@@ -89,7 +89,7 @@ function module:drawColumn(column, isSelected)
       if type(item) == 'table' then
         love.graphics.push('all')
         if item[1] == 'tint' then
-          local color = {item[2][1] or 0, item[2][2] or 0, item[2][3] or 0, item[2][4] or 0}
+          local color = {item[2][1] or 0, item[2][2] or 0, item[2][3] or 0, item[2][4] or 1}
           love.graphics.setColor(lume.hsl(unpack(color)))
           love.graphics.rectangle('fill', 0, -self.rowHeight / 4, self.rowHeight / 2, self.rowHeight / 2)
         else
@@ -205,7 +205,7 @@ function module:touchmoved(id, x, y, dx, dy, pressure)
       love.graphics.setColor(0,0,0,0)
       love.graphics.rectangle('fill', 0, 0, self.renderer.width, self.renderer.height)
       --self.renderer.stroke = self.renderer.stroke * 100
-      --self.renderer:draw({'tint', {0, 0, 0, 0}, {'linear', {0, 100}, {'lhp'}}}, .01)
+      --self.renderer:draw({'tint', {0, 0, 0, 0}, {'position', {0, 100}, {'edge'}}}, .01)
       --self.renderer.stroke = self.renderer.stroke / 100
       love.graphics.setCanvas()
       love.graphics.setBlendMode('alpha')

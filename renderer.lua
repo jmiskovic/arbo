@@ -72,11 +72,11 @@ function trace(node, x, y) -- returns ray color
   if type(node[1]) ~= 'string' then
     error('node has no type?!', node)
     return {1, 1, 1, 0}
-  elseif node[1] == 'lhp' then
+  elseif node[1] == 'edge' then
     return {0, 1, 1,  .5 - (((node[2] or 0) + y) * 100 * (node[3] or 1))}
   elseif node[1] == 'simplex' then
     return {0, 1, 1, (node[3] or 1) * ((node[2] or 0) + noise.Simplex2D(x, y))}
-  elseif node[1] == 'linear' then
+  elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
     return trace(node[3], x, y)
@@ -94,7 +94,7 @@ function trace(node, x, y) -- returns ray color
     end
     ray[4] = max
     return ray
-  elseif node[1] == 'join' then
+  elseif node[1] == 'combine' then
   	local ray
     for i=2, #node do
       branch = node[i]
@@ -102,7 +102,7 @@ function trace(node, x, y) -- returns ray color
       if ray[4] > 0.05 then break end
     end
     return ray
-  elseif node[1] == 'intersect' then
+  elseif node[1] == 'clip' then
     local ray
     local min = math.huge
     for i=2, #node do

@@ -10,7 +10,7 @@ local renderer = require('renderer').new(sw, sh)
 local treeverse = require('treeverse')
 local editor = require('editor').new(sw, sh, scene)
 local cameraTransform = {0, 0, 0, 1}
-local camera = {linear, cameraTransform, scene}
+local camera = {position, cameraTransform, scene}
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
 local nodeTransforms = {}
@@ -19,7 +19,7 @@ local function updateTransforms(node)
   if debug.getinfo(16) then return end
 
   if type(node) == 'table' then
-    if node[1] == 'linear' then
+    if node[1] == 'position' then
       nodeTransforms[node] = transform:setTransformation(
           node[2][1],                 -- dx
           node[2][2],                 -- dy
@@ -70,12 +70,12 @@ function interact(node, x, y)
       end
     end
     return true
-  elseif node[1] == 'lhp' or
+  elseif node[1] == 'edge' or
      node[1] == 'simplex' or
      node[1] == 'union' or
-     node[1] == 'intersect' then
+     node[1] == 'clip' then
     return false
-  elseif node[1] == 'linear' then
+  elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
     return interact(node[2], x, y) or interact(node[3], x, y)
@@ -86,7 +86,7 @@ function interact(node, x, y)
   elseif node[1] == 'negate' or -- TODO: what to do here?
          node[1] == 'tint' then
     return interact(node[2], x, y)
-  elseif node[1] == 'join' then
+  elseif node[1] == 'combine' then
     local i = false
     for i=2, #node do
       branch = node[i]
@@ -197,7 +197,7 @@ function love.keypressed(key)
       scene = loaded
       editor = require('editor').new(sw, sh, scene)
       cameraTransform = {0, 0, 0, 1, 1}
-      camera = {linear, cameraTransform, scene}
+      camera = {position, cameraTransform, scene}
     end
   end
 end

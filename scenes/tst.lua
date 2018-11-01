@@ -1,34 +1,55 @@
 local lume = require('lume')
 nodes = require('nodes')
 
-local sides = 5
+local sides = 3
 
 local regular_polygon =
-{intersect}
+{clip,
+  {position, {0, 0, 0, .9}, {simplex}}
+}
 
 for i=1,sides do
   table.insert(regular_polygon,
-    {linear, {0, 0, i/sides}, {linear, {0, 1}, {lhp}}}
+    {position, {0, 0, i/sides}, {position, {0, 1}, {edge, .05}}}
   )
 end
 
-return
-{join,
-  {linear,
+local scene = {combine,
+  {position,
     {0,0,0,.5,.5},
-    regular_polygon,
+    {
+      combine,
+      regular_polygon,
+    },
   },
   {tint,
-    {.8, .3, .4},
-    {join,
-      {lhp},
-      {linear,
+    {0.71, 0.30, 0.11},
+    {combine,
+      {edge, .05},
+      {position,
         {0, 0, 0.5},
-        {lhp},
+        {edge, .05},
       }
     },
   },
   update = function(scene, dt, t)
-    scene[2][2][3] = t / 50
+    --scene[2][2][3] = t / 50
   end
 }
+
+return {
+  tint,
+  {.15, .9, .5},
+  {
+    clip,
+    {
+      position,
+      {0, 0, .1},
+      {
+        edge
+      },
+    },
+    {simplex}
+  }
+}
+
