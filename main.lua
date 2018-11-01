@@ -1,8 +1,10 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = require('scenes/useless')
+local scene = require('scenes/flying')
 local TGF = require('TGF')
+local transpiler = require('transpiler')
+transpiler.process(scene)
 
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77

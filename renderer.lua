@@ -25,7 +25,7 @@ function module.drawC(scene, duration, canvas, width, height, stroke)
   while love.timer.getTime() - t < duration do
     local x = -width/height + 2 * width/height * math.random()
     local y = -1 + 2 * math.random()
-    local ray = trace(scene, x, y)
+    local ray = gentrace(scene, x, y)
     local h, s, l, a = unpack(ray)
     love.graphics.setColor(lume.hsl(h, s, l, a))
     love.graphics.push()
