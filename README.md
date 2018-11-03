@@ -115,7 +115,7 @@ Under construction. Current iteration can navigate the scene tree and edit numer
 
 ## How to start up?
 
-Grab interpreter from (LÖVE)[https://love2d.org/] and use it to execute main.lua
+Grab interpreter from [LÖVE website](https://love2d.org/) and use it to execute main.lua
 
 Development is done on Linux & Android. Currently requires touchscreen to access features.
 

@@ -17,7 +17,7 @@ function module.new(width, height, scene)
   font = love.graphics.newFont('fonts/coolstory.ttf', width / 20)
   instance.colWidth = width / 5
   instance.rowHeight = font:getHeight()
-  updateParents(scene, instance.parents)
+  updateParents(scene, instance.parents, 1)
   instance.columns[1] = newColumn(scene)
   instance.renderer = require('renderer').new(instance.colWidth, instance.colWidth)
   instance.renderer.stroke = 10 --instance.colWidth / 50
@@ -29,7 +29,7 @@ function newColumn(tree)
   return instance
 end
 
-function updateParents(node, parents)
+function updateParents(node, parents, depth)
   for k,child in ipairs(node) do
     if type(child) == 'table' then
       -- append parent to table if it's not in there already
@@ -46,8 +46,8 @@ function updateParents(node, parents)
           table.insert(parents[child], node)
         end
       end
-      if debug.getinfo(15) then
-        updateParents(child, parents)
+      if depth < 15 then
+        updateParents(child, parents, depth + 1)
       end
     end
   end

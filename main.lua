@@ -15,8 +15,7 @@ transform = love.math.newTransform()
 -- transform matrix calculation caching per node
 local nodeTransforms = {}
 
-local function updateTransforms(node)
-  if debug.getinfo(16) then return end
+local function updateTransforms(node, depth)
 
   if type(node) == 'table' then
     if node[1] == 'position' then
@@ -29,14 +28,16 @@ local function updateTransforms(node)
         ):inverse()
     end
     for i,child in ipairs(node) do
-      updateTransforms(child)
+      if depth < 15 then
+        updateTransforms(child, depth + 1)
+      end
     end
   end
 end
 
 function getTransform(node)
   if not nodeTransforms[node] then
-    updateTransforms(node)
+    updateTransforms(node, 1)
   end
   return nodeTransforms[node]
 end
@@ -155,7 +156,7 @@ function love.update(dt)
   if scene.update then scene.update(scene, dt, time) end
   treeverse.update(dt)
   editor:update(dt)
-  updateTransforms(camera)
+  updateTransforms(camera, 1)
   if #love.touch.getTouches() == 0 then
     love.timer.sleep(.02)
   end
@@ -163,18 +164,19 @@ function love.update(dt)
 end
 
 local frames = 1000
+local renderTime = .04
 function love.draw()
   local white = {1, 1, 1}
   local rayCount = 0
-  rayCount = renderer:draw(scene, .02)
+  rayCount = renderer:draw(scene, renderTime)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
   if #love.touch.getTouches() == 1 then
     treeverse.draw()
     editor:draw()
-    --love.graphics.setColor(1, 1, 1)
-    --frames = .96 * frames + .04 * rayCount
-    --love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / 1000, love.timer.getFPS(), renderer.stroke))
+    love.graphics.setColor(1, 1, 1)
+    frames = .96 * frames + .04 * rayCount
+    love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / renderTime / 1000, love.timer.getFPS(), renderer.stroke))
   end
 end
 
