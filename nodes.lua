@@ -14,8 +14,8 @@ tint      = 'tint'
 wrap      = 'wrap'
 -- {negate, arbo}
 negate    = 'negate'
--- {union, arbo1, arbo2, ...}
-union     = 'union'
+-- {add, arbo1, arbo2, ...}
+add       = 'add'
 -- {set, table_index, new_value}
 set       = 'set'
 -- {memo, arbo}

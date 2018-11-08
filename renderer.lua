@@ -31,7 +31,7 @@ function module.drawC(scene, duration, canvas, width, height, stroke)
       love.graphics.translate(x, y)
       love.graphics.rotate(.1 + math.random())
       local d = stroke / height
-      love.graphics.setColor(lume.hsl(h, s, l, a))
+      love.graphics.setColor(lume.hsl(h, s, l))
       love.graphics.ellipse('fill', 0, 0, d, d/3, 6)
     love.graphics.pop()
     frames = frames + 1
@@ -73,7 +73,7 @@ function trace(node, x, y, depth) -- returns ray color
   elseif node[1] == 'edge' then
     return {0, 1, .9,  .5 - (((node[2] or 0) + y) * 100 * (node[3] or 1))}
   elseif node[1] == 'simplex' then
-    return {0, 1, 1, (node[3] or 1) * ((node[2] or 0) + noise.Simplex2D(x, y))}
+    return {0, 1, 1, (node[3] or 1) * 100 * ((node[2] or 0) + noise.Simplex2D(x, y))}
   elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
@@ -81,16 +81,6 @@ function trace(node, x, y, depth) -- returns ray color
   elseif node[1] == 'negate' then
     local ray = trace(node[2], x, y, depth + 1)
     ray[4] = 1 - ray[4]
-    return ray
-  elseif node[1] == 'union' then
-  	local ray
-    local max = -math.huge
-    for i=2, #node do
-      branch = node[i]
-      ray = trace(branch, x, y, depth + 1)
-      max = math.max(max, r[4])
-    end
-    ray[4] = max
     return ray
   elseif node[1] == 'combine' then
   	local ray
@@ -109,6 +99,15 @@ function trace(node, x, y, depth) -- returns ray color
       min = math.min(min, ray[4])
     end
     ray[4] = min
+    return ray
+  elseif node[1] == 'add' then
+    local ray, a
+    a = 0
+    for i=2, #node do
+      ray = trace(node[i], x, y, depth + 1)
+      a = a + ray[4]
+    end
+    ray[4] = a
     return ray
   elseif node[1] == 'wrap' then
     local r = (x^2 + y^2) - 1

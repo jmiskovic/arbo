@@ -2,7 +2,7 @@ local lume =require('lume')
 require('nodes')
 
 local branch = {
-  tint, {0.02, 0.34, 0.051, 1},
+  tint, {0.75, .30, 0.09},
   {
     clip,
     {position, {0,   0, .52}, {edge}},
@@ -12,72 +12,93 @@ local branch = {
 }
 
 local tree = {
-  memo, .02,
+  position,
+  {.5, -.15, 0, 1},
   {
-    tint, {0.10, 0.95, 0.58, .07},
+    memo, .03,
     {
-      combine,
-      branch,
+      tint, {0.77, 0.94, 0.43, .07},
       {
-        position,
-        {0, .35, .1, .7},
-        branch
+        combine,
+        branch,
+        {
+          position,
+          {0, .35, .1, .7},
+          branch
+        },
+        {
+          position,
+          {-.05, .45, -.1, .6},
+          branch
+        },
+        {
+          position,
+          {.01, .55, .1, .4},
+          branch
+        },
       },
-      {
-        position,
-        {-.05, .45, -.1, .6},
-        branch
-      },
-      {
-        position,
-        {.01, .55, .1, .4},
-        branch
-      },
-    },
+    }
   }
 }
 
 -- inject recursive reference
-tree[3][3][3][3] = tree
-tree[3][3][4][3] = tree
-tree[3][3][5][3] = tree
+tree[3][3][3][3][3] = tree[3]
+tree[3][3][3][4][3] = tree[3]
+tree[3][3][3][5][3] = tree[3]
 
 local pondShape = {
   position,
-  {-.4, -.52, .5, 3.2, .54},
+  {-.4, -.52, .52, 3.2, .54},
   {
     clip,
     {
       position,
-      {6, -2.83, 0, 2.25},
+      {-.73, 2.71, 0, 1.6},
       {simplex}
     },
     { wrap, {edge}},
   }
 }
 
+local moon =
+    { --moon
+      tint,
+      {0.39, 0.33, 0.81, 1.00},
+      {position, {-.63, .55, 0.03, .3},
+        {
+          clip,
+          {
+            position,
+            {0,0,0,1},
+            { wrap, {edge}},
+          },
+          {
+            position,
+            {.5,0,0,.9},
+            {negate, {wrap, {edge}}},
+          }
+        }
+      }
+    }
 
-local scene = {
+local scene =
+{
   position,
   {.4, -.3, 0.01, 1.1},
   {
     combine,
-    { -- tree
-      position,
-      {.5, -.15, 0, 1},
-      tree,
-    },
-
+    tree,
     { -- reflection
-      tint,
-      {.44, .26, .42, 1},
+      clip,
+      pondShape,
       {
-        clip,
-        {
-          position, {.5, -.15, 0, 1, -.85},
-          tree
-        },
-        pondShape,
+        memo, .04,
+        {position, {0, -.0, 0, 1, -.9},
+          {combine,
+            tree,
+            moon
+          }
+        }
       },
     },
 
@@ -108,10 +129,19 @@ local scene = {
     },
     {tint, {.95, .58, .43, 1}, {edge}},
 
-    {tint, {0.55, .28, 0.63, 1},
+    moon,
+
+
+    {tint, {0.65, .4, 0.4, 1},
       {position, {0, 0.05}, {edge}},
     },
-    {tint, {0.53, .81, .37, 1.00}, {combine, {position, {0, 0, .5}, {edge}}, {edge}}},
+
+    { --sky
+      tint,
+      {0.59, 0.51, 0.19, 1.00},
+      {position, {0, -100, .5}, {edge}}
+    },
+
   }
 }
 

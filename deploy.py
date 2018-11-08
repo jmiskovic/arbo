@@ -4,7 +4,7 @@ import commands
 import sys
 
 def push(localPath):
-  remotePath = os.path.join('/sdcard/arbo/tst', localPath)
+  remotePath = os.path.join('/sdcard/arbo/', localPath)
   status, output = commands.getstatusoutput(' '.join(('adb push', localPath, remotePath)))
   print(output)
 

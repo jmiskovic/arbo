@@ -20,7 +20,7 @@ function module.new(width, height, scene)
   updateParents(scene, instance.parents, 1)
   instance.columns[1] = newColumn(scene)
   instance.renderer = require('renderer').new(instance.colWidth, instance.colWidth)
-  instance.renderer.stroke = 10 --instance.colWidth / 50
+  instance.renderer.stroke = 10
   return instance
 end
 

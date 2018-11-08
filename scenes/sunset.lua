@@ -9,7 +9,7 @@ sky =
       {edge},
       {position,
         {0, 0, 0.5},
-        {edge},
+        {edge, 0, 1},
       }
     },
   },
@@ -29,7 +29,7 @@ sun =
 sea =
 {tint,
   {0.58, 0.38, 0.16},
-  {edge},
+  {edge, 0, 1},
 }
 
 cloudLayer =
@@ -37,23 +37,23 @@ cloudLayer =
   -- limit to horizontal stripe
   {position,
     {0, -.8, .5},
-    {edge},
+    {edge, 0, 1},
   },
   {position,
     {0, 0.4, 0},
-    {edge},
+    {edge, 0, 1},
   },
   -- noise as clouds
   {combine,
     {tint,
       {0.2, 0.38, 0.86},
-      {simplex, 0.1},
+      {simplex, 0.1, 1},
     },
     {tint,
       {0.1, 0.53, 0.65},
       {position,
         {0, -0.12, 0, 1, 1},
-        {simplex, 0.1},
+        {simplex, 0.1, 1},
       },
     }
   }

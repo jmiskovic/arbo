@@ -1,16 +1,16 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = require('scenes/useless')
+local scene = require('scenes/egg')
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
 local renderer = require('renderer').new(sw, sh)
 local treeverse = require('treeverse')
-local editor = require('editor').new(sw, sh, scene)
 local cameraTransform = {0, 0, 0, 1}
 local camera = {position, cameraTransform, scene}
+local editor = require('editor').new(sw, sh, camera)
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
 local nodeTransforms = {}
@@ -168,7 +168,7 @@ local renderTime = .04
 function love.draw()
   local white = {1, 1, 1}
   local rayCount = 0
-  rayCount = renderer:draw(scene, renderTime)
+  rayCount = renderer:draw(camera, renderTime)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
   if #love.touch.getTouches() == 1 then

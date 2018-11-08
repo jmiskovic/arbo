@@ -7,11 +7,11 @@ local splat =
   {clip,
     {position,
       {0, 0, .5 - 1/count/2},
-      {edge},
+      {edge, 0, 1},
     },
     {position,
       {0, 0, 0 + 1/count/2},
-      {edge},
+      {edge, 0, 1},
     },
   }
 
@@ -40,14 +40,14 @@ local scene =
   {tint, {0.91, 0.41, 0.51}, {position, {0,0,12/count}, splat}},
   {tint, {0.82, 0.32, 0.32}, {position, {0,0,11/count}, splat}}, -- purple
   {tint, {0.96, 1.00, 0.50}, {position, {0,0,10/count}, splat}}, -- magenta
-  {tint, {0.71, 0.30, 0.11}, {position, {0,0,9/count}, splat}}, -- dark navy
+  {tint, {0.71, 0.30, 0.11}, {position, {0,0,9/count}, splat}},  -- dark navy
   {tint, {0.64, 0.28, 0.21}, {position, {0,0,8/count}, splat}},
   {tint, {0.63, 0.28, 0.31}, {position, {0,0,7/count}, splat}},
   {tint, {0.61, 0.20, 0.44}, {position, {0,0,6/count}, splat}},
   {tint, {0.60, 0.21, 0.63}, {position, {0,0,5/count}, splat}},
-  {tint, {0.60, 0.29, 0.81}, {position, {0,0,4/count}, splat}},
-  {tint, {0.00, 0.00, 1.00}, {position, {0,0,3/count}, splat}}, -- pure white
-  {tint, {0.51, 0.91, 0.57}, {position, {0,0,2/count}, splat}}, -- aqua
-  {tint, {0.55, 1.00, 0.43}, {position, {0,0,1/count}, splat}}, -- sky blue
+  {tint, {0.60, 0.29, 0.81}, {position, {0,0,4/count}, splat}},  -- light gray
+  {tint, {0.00, 0.00, 1.00}, {position, {0,0,3/count}, splat}},  -- pure white
+  {tint, {0.51, 0.91, 0.57}, {position, {0,0,2/count}, splat}},  -- aqua
+  {tint, {0.55, 1.00, 0.43}, {position, {0,0,1/count}, splat}},  -- sky blue
 }
 return scene
