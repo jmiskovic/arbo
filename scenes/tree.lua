@@ -129,13 +129,9 @@ local scene =
     },
     {tint, {.95, .58, .43, 1}, {edge}},
 
+    -- horizon
+    { tint, {0.65, .4, 0.4, 1}, {position, {0, 0.05}, {edge}}},
     moon,
-
-
-    {tint, {0.65, .4, 0.4, 1},
-      {position, {0, 0.05}, {edge}},
-    },
-
     { --sky
       tint,
       {0.59, 0.51, 0.19, 1.00},

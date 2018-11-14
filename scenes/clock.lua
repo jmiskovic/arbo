@@ -95,7 +95,7 @@ local clock =
   hours,
   face,
 ---[[
-  update = function (scene, dt, t)
+  tick = function (scene, t)
     local time = os.date('*t')
     scene[3][3][2][3] = .5/2 -time.sec  / 60 * 2 * .5
     scene[4][3][2][3] = .5/2 -time.min  / 60 * 2 * .5

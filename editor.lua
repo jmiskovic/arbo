@@ -141,7 +141,6 @@ end
 function module:update(dt)
   local cursor, target
   -- align columns and rows to grid
-  local colSelected = self.columns[math.floor(self.selected + .5)]
   if not love.mouse.isDown(1) and #love.touch.getTouches() == 0 then
     cursor = self.selected
     target = math.floor(cursor + .5)
@@ -194,22 +193,38 @@ function module:update(dt)
 end
 
 function module:touchmoved(id, x, y, dx, dy, pressure)
-  if math.abs(dx) > 30 or math.abs(dy) > 30 then return end
-  self.selected = self.selected - 5 * dx / self.width
-  local colSelected = self.columns[math.floor(self.selected + .5)]
-  if colSelected then
-    colSelected.selected = colSelected.selected - 8 * dy / self.height
-    if math.floor(self.selected + 5 * dx / self.width + .5) ~= math.floor(self.selected + .5) then
-      love.graphics.setBlendMode('replace')
-      love.graphics.setCanvas(self.renderer.canvas)
-      love.graphics.setColor(0,0,0,0)
-      love.graphics.rectangle('fill', 0, 0, self.renderer.width, self.renderer.height)
-      --self.renderer.stroke = self.renderer.stroke * 100
-      --self.renderer:draw({'tint', {0, 0, 0, 0}, {'position', {0, 100}, {'edge'}}}, .01)
-      --self.renderer.stroke = self.renderer.stroke / 100
-      love.graphics.setCanvas()
-      love.graphics.setBlendMode('alpha')
+  if #love.touch.getTouches() == 1 then
+    if math.abs(dx) > 30 or math.abs(dy) > 30 then return end
+    self.selected = self.selected - 5 * dx / self.width
+    local colSelected = self.columns[math.floor(self.selected + .5)]
+    if colSelected then
+      colSelected.selected = colSelected.selected - 8 * dy / self.height
+      if math.floor(self.selected + 5 * dx / self.width + .5) ~= math.floor(self.selected + .5) then
+        love.graphics.setBlendMode('replace')
+        love.graphics.setCanvas(self.renderer.canvas)
+        love.graphics.setColor(0,0,0,0)
+        love.graphics.rectangle('fill', 0, 0, self.renderer.width, self.renderer.height)
+        --self.renderer.stroke = self.renderer.stroke * 100
+        --self.renderer:draw({'tint', {0, 0, 0, 0}, {'position', {0, 100}, {'edge'}}}, .01)
+        --self.renderer.stroke = self.renderer.stroke / 100
+        love.graphics.setCanvas()
+        love.graphics.setBlendMode('alpha')
+      end
     end
+  end
+end
+
+function module:pinchmoved(dx, dy, drot, dscl)
+  local colSelected = self.columns[math.floor(self.selected + .5)]
+  if colSelected and colSelected.tree[1] == 'position' then
+    colSelected.tree[2][1] = (colSelected.tree[2][1] or 0) + dx
+    colSelected.tree[2][2] = (colSelected.tree[2][2] or 0) + dy
+    colSelected.tree[2][3] = (colSelected.tree[2][3] or 0) + drot
+    --colSelected.tree[2][4] = (colSelected.tree[2][4] or 1) * dscl
+    --if colSelected.tree[2][5] then
+    --  colSelected.tree[2][5] = colSelected.tree[2][5] * dscl
+    --end
+
   end
 end
 

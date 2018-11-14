@@ -28,7 +28,7 @@ local rays = {combine}
 for i=1,count do
   table.insert(rays,
     {tint,
-      {i/count, .75, .6},
+      {i/count, .85, .5},
       {position,
         {0, 0, 1 / count * i},
         ray,
@@ -41,9 +41,10 @@ local scene =
 {position,
   {0, 0, 0,},
   rays,
-  update= function(scene, dt, t)
-    scene[2][3] = -t / 200
-  end
+  {tint, {.8, .3, .5}, {wrap, {edge}}},
+  --tick = function(scene, t)
+  --  scene[2][3] = -t / 200
+  --end
 }
 
 return scene

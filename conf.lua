@@ -14,6 +14,7 @@ function love.conf(t)
   t.window.fullscreen = not false
   t.window.resizable = true
   t.window.vsync = false
-  t.window.width, t.window.height = unpack(resolutions[3])
+  t.window.width, t.window.height = unpack(resolutions[0])
+  t.window.x = 0
   love.filesystem.setIdentity('arbo')
 end

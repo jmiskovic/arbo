@@ -15,7 +15,7 @@ end
 
 function module.drawC(scene, duration, canvas, width, height, stroke)
   local t = love.timer.getTime()
-  local frames = 0
+  local raysShot = 0
 
   love.graphics.push('all')
   love.graphics.reset()
@@ -34,10 +34,10 @@ function module.drawC(scene, duration, canvas, width, height, stroke)
       love.graphics.setColor(lume.hsl(h, s, l))
       love.graphics.ellipse('fill', 0, 0, d, d/3, 6)
     love.graphics.pop()
-    frames = frames + 1
+    raysShot = raysShot + 1
   end
   love.graphics.pop()
-  return frames
+  return raysShot
 end
 
 function module:draw(scene, duration)
@@ -45,17 +45,38 @@ function module:draw(scene, duration)
 end
 
 local memos = {}
+function lookup(node, precision, x, y, depth)
+  memos[node] = memos[node] or {count = 0}
+  local memo = memos[node]
+
+  local minKey
+  local minD2 = math.huge
+
+  for keys,value in ipairs(memo) do
+    local d2 = 0
+    for k,v in pairs(keys) do
+      --d2 = (x - )
+    end
+    --if minD2 <
+  end
+  table.sort(distances, function (a,b) return a[1] < b[1] end)
+  table.insert(distances, {d2, value})
+end
+
 function memoLookup(node, precision, x, y, depth)
   local r
   local xd = x + precision * (math.random() - .5)
   local yd = y + precision * (math.random() - .5)
   local xg = xd - (xd % precision) + precision / 2
   local yg = yd - (yd % precision) + precision / 2
+  if love.keyboard.isDown('backspace') then
+    memos[node] = nil
+  end
   memos[node] = memos[node] or {count = 0}
   local memo = memos[node]
   memo[xg] = memo[xg] or {}
   r = memo[xg][yg]
-  if not r or math.random() > .9 then
+  if not r or math.random() > .85 then
     memo[xg] = memo[xg] or {}
     r = trace(node[3], xg, yg, depth + 1)
     memo[xg][yg] = r
@@ -71,24 +92,45 @@ function trace(node, x, y, depth) -- returns ray color
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node[1] == 'edge' then
-    return {0, 1, .9,  .5 - (((node[2] or 0) + y) * 100 * (node[3] or 1))}
+    return {0, 0, 1,  .5 - (((node[2] or 0) + y) * 100 * (node[3] or 1))}
   elseif node[1] == 'simplex' then
     return {0, 1, 1, (node[3] or 1) * 100 * ((node[2] or 0) + noise.Simplex2D(x, y))}
-  elseif node[1] == 'position' then
-    local t = getTransform(node)
-    x,y = t:transformPoint(x, y)
-    return trace(node[3], x, y, depth + 1)
   elseif node[1] == 'negate' then
     local ray = trace(node[2], x, y, depth + 1)
     ray[4] = 1 - ray[4]
     return ray
+  elseif node[1] == 'replicate' then
+    local t = getTransform(node[3])
+    for i = 1, node[2] do
+      ray = trace(node[4], x, y, depth + 1)
+      x,y = t:transformPoint(x, y)
+      if ray[4] > 0 then break end
+    end
+    return ray
+  elseif node[1] == 'position' then
+    local t = getTransform(node)
+    x,y = t:transformPoint(x, y)
+    return trace(node[3], x, y, depth + 1)
+  elseif node[1] == 'wrap' then
+    local r = (x^2 + y^2) - 1
+    local a = -math.atan2(y, x) / math.pi
+    return trace(node[2], a, r, depth + 1)
   elseif node[1] == 'combine' then
-  	local ray
+    local ray
     for i=2, #node do
       branch = node[i]
       ray = trace(branch, x, y, depth + 1)
-      if ray[4] > 0.05 then break end
+      if ray[4] > 0 then break end
     end
+    return ray
+  elseif node[1] == 'add' then
+    local ray, a
+    a = 0
+    for i=2, #node do
+      ray = trace(node[i], x, y, depth + 1)
+      a = a + ray[4]
+    end
+    ray[4] = a
     return ray
   elseif node[1] == 'clip' then
     local ray
@@ -100,19 +142,6 @@ function trace(node, x, y, depth) -- returns ray color
     end
     ray[4] = min
     return ray
-  elseif node[1] == 'add' then
-    local ray, a
-    a = 0
-    for i=2, #node do
-      ray = trace(node[i], x, y, depth + 1)
-      a = a + ray[4]
-    end
-    ray[4] = a
-    return ray
-  elseif node[1] == 'wrap' then
-    local r = (x^2 + y^2) - 1
-    local a = -math.atan2(y, x) / math.pi
-    return trace(node[2], a, r, depth + 1)
   elseif node[1] == 'tint' then
     local ray = trace(node[3], x, y, depth + 1)
     -- hsl

@@ -42,7 +42,7 @@ local scene =
     },
     --{tint, {0.36, 0.38, 0.39}, {position, {0,0,29/count}, splat}},
   },
-  --update = function(scene, dt, t)
+  --tick = function(scene, dt, t)
   --  earthZoom = lume.remap(love.mouse.getX(), 0, love.graphics.getWidth(), .4, 50)
   --  scene[3][2][2][2] = -earthZoom
   --  scene[3][2][2][4] = earthZoom
