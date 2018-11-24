@@ -216,15 +216,42 @@ end
 
 function module:pinchmoved(dx, dy, drot, dscl)
   local colSelected = self.columns[math.floor(self.selected + .5)]
-  if colSelected and colSelected.tree[1] == 'position' then
-    colSelected.tree[2][1] = (colSelected.tree[2][1] or 0) + dx
-    colSelected.tree[2][2] = (colSelected.tree[2][2] or 0) + dy
-    colSelected.tree[2][3] = (colSelected.tree[2][3] or 0) + drot
-    --colSelected.tree[2][4] = (colSelected.tree[2][4] or 1) * dscl
-    --if colSelected.tree[2][5] then
-    --  colSelected.tree[2][5] = colSelected.tree[2][5] * dscl
-    --end
-
+  if colSelected then
+    if colSelected.tree[1] == 'position' then
+      colSelected.tree[2][1] = (colSelected.tree[2][1] or 0) + dx
+      colSelected.tree[2][2] = (colSelected.tree[2][2] or 0) + dy
+      colSelected.tree[2][3] = (colSelected.tree[2][3] or 0) + drot
+      colSelected.tree[2][4] = (colSelected.tree[2][4] or 1) * dscl
+      if colSelected.tree[2][5] then
+        colSelected.tree[2][5] = colSelected.tree[2][5] * dscl
+      end
+    elseif colSelected.tree[1] == 'camera' then
+      colSelected.tree[2][1] = (colSelected.tree[2][1] or 0) + dx -- * (colSelected.tree[2][4] or 1)
+      colSelected.tree[2][2] = (colSelected.tree[2][2] or 0) + dy -- * (colSelected.tree[2][4] or 1)
+      colSelected.tree[2][3] = (colSelected.tree[2][3] or 0) + drot
+      colSelected.tree[2][4] = (colSelected.tree[2][4] or 1) * dscl
+      colSelected.tree[2][5] = colSelected.tree[2][4]
+      colSelected.tree[2][6] = -colSelected.tree[2][1]
+      colSelected.tree[2][7] = -colSelected.tree[2][2]
+    elseif colSelected.tree[1] == 'tint' then
+      local maxScalarProjection, maxI = 0, 1
+      local axes = {
+                     {   1, 0},              -- hue
+                     {-1/2, math.sqrt(3)/2}, -- saturation
+                     { 1/2, math.sqrt(3)/2}, -- lightness
+                   }
+      for i,axis in ipairs(axes) do
+        local sp = lume.scalarProj(dx, dy, unpack(axis))
+        if math.abs(sp) > math.abs(maxScalarProjection) then
+          maxScalarProjection, maxI = sp, i
+        end
+      end
+      local color = colSelected.tree[2]
+      color[maxI] = (color[maxI] or 1) + maxScalarProjection / 2
+      color[1] = color[1] % 1
+      color[2] = math.min(1, math.max(color[2]))
+      color[3] = math.min(1, math.max(color[3]))
+    end
   end
 end
 

@@ -150,6 +150,13 @@ function lume.angle(x1, y1, x2, y2)
   return math_atan2(y2 - y1, x2 - x1)
 end
 
+function lume.scalarProj(x1, y1, x2, y2)
+  local dot = x1 * x2 + y1 * y2
+  local len1 = math.sqrt(x1^2 + y1^2)
+  local len2 = math.sqrt(x2^2 + y2^2)
+  local cosT = dot / (len1 * len2)
+  return len1 * cosT
+end
 
 function lume.random(a, b)
   if not a then a, b = 0, 1 end

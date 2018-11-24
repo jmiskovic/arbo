@@ -1,8 +1,7 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = require('scenes/egg')
---local scene = {position, {0,0,0,.1,.1}, {simplex}}
+local scene = {camera, {0,0,.006,1}, require('scenes/tree')} --park/location_01')}
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
@@ -33,13 +32,15 @@ local function walkNodes(node, depth)
     if node.tick then
       nodeTicks[node] = node.tick
     end
-    if node[1] == 'position' then
+    if node[1] == 'position' or node[1] == 'camera' then
       nodeTransforms[node] = transform:setTransformation(
           node[2][1],                 -- dx
           node[2][2],                 -- dy
           (node[2][3] or 0) * 2 * math.pi,   -- rotation, have to convert 0..1 to 0..2pi
           node[2][4],                 -- sx
-          node[2][5]                  -- sy
+          node[2][5],                 -- sy
+          node[2][6],                 -- ox
+          node[2][7]                  -- oy
         ):inverse()
     end
     for i,child in ipairs(node) do
@@ -61,37 +62,45 @@ function interact(node, x, y)
   if node.react then
     if x^2 + y^2 < 1 then
       print(string.format('interacted r=%.2f, x=%.2f, y=%.2f', math.sqrt(x*x+y*y), x, y))
-      local closeness = {} -- {case, closeness}
-      for i, reaction in ipairs(node.react) do
-        closeness[reaction] = 0
-        for key, condition in pairs(reaction.case) do
-          closeness[reaction] = closeness[reaction] + (condition - (node[key] or 0))^2
-          print(key, node[key])
+      if type(node.react) == 'function' then
+        print('function')
+        node.react(scene)
+        return true
+      elseif type(node.react) == 'table' then
+        print('table')
+        local closeness = {} -- {case, closeness}
+        for i, reaction in ipairs(node.react) do
+          closeness[reaction] = 0
+          for key, condition in pairs(reaction.case) do
+            closeness[reaction] = closeness[reaction] + (condition - (node[key] or 0))^2
+            print(key, node[key])
+          end
+          print('distance from action', reaction.name, closeness[reaction])
         end
-        print('distance from action', reaction.name, closeness[reaction])
-      end
-      local closest = nil
-      for case, distance2 in pairs(closeness) do
-        closest = closest or case
-        if distance2 < closeness[closest] then
-          closest = case
+        local closest = nil
+        for case, distance2 in pairs(closeness) do
+          closest = closest or case
+          if distance2 < closeness[closest] then
+            closest = case
+          end
         end
-      end
-      if closest then
-        for i, instruction in ipairs(closest) do
-          if instruction[1] == 'set' then
-            node[instruction[2]] = instruction[3]
+        if closest then
+          for i, instruction in ipairs(closest) do
+            if instruction[1] == 'set' then
+              node[instruction[2]] = instruction[3]
+            end
           end
         end
       end
+      return true
+    else
+      return false
     end
-    return true
   elseif node[1] == 'edge' or
      node[1] == 'simplex' or
-     node[1] == 'union' or
-     node[1] == 'clip' then
+     node[1] == 'union' then
     return false
-  elseif node[1] == 'position' then
+  elseif node[1] == 'position' or node[1] == 'camera' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
     return interact(node[2], x, y) or interact(node[3], x, y)
@@ -99,10 +108,11 @@ function interact(node, x, y)
     local r = (x^2 + y^2) - 1
     local a = -math.atan2(y, x) / math.pi
     return interact(node[2], a, r)
-  elseif node[1] == 'negate' or -- TODO: what to do here?
-         node[1] == 'tint' then
+  elseif node[1] == 'tint' then
+    return interact(node[3], x, y)
+  elseif node[1] == 'negate' then -- TODO: what to do here?
     return interact(node[2], x, y)
-  elseif node[1] == 'combine' then
+  elseif node[1] == 'combine' or node[1] == 'add' or node[1] == 'clip' then
     local i = false
     for i=2, #node do
       branch = node[i]
@@ -144,9 +154,9 @@ function love.update(dt)
   treeverse.update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
-  if #love.touch.getTouches() == 0 then
-    love.timer.sleep(.02)
-  end
+  --if #love.touch.getTouches() == 0 then
+  --  love.timer.sleep(.02)
+  --end
   love.timer.sleep(.02)
   for i, touchId in ipairs(love.touch.getTouches()) do
     tInit[i] = {love.touch.getPosition(touchId)}
@@ -163,8 +173,8 @@ function love.draw()
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(renderer.canvas)
   if #love.touch.getTouches() == 1 then
-    treeverse.draw()
     editor:draw()
+    treeverse.draw()
     love.graphics.setColor(1, 1, 1)
     frames = .96 * frames + .04 * rayCount
     love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / renderTime / 1000, love.timer.getFPS(), renderer.stroke))
@@ -226,6 +236,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
         math.atan2(tCurr[1][2] - tCurr[2][2], tCurr[1][1] - tCurr[2][1]) -
         math.atan2(tInit[1][2] - tInit[2][2], tInit[1][1] - tInit[2][1])
       )
+    rot = math.abs(rot) > .01 and 0 or rot -- stupid fix for angle wrap around
     local scl = 1 + .0001 * (
       math.sqrt((tCurr[1][1] - tCurr[2][1])^2 + (tCurr[1][2] - tCurr[2][2])^2) -
       math.sqrt((tInit[1][1] - tInit[2][1])^2 + (tInit[1][2] - tInit[2][2])^2))
