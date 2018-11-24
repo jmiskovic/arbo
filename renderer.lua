@@ -3,6 +3,17 @@ local module = {}
 local lume = require('lume')
 local noise = require('noise')
 
+local pi = math.pi
+local huge = math.huge
+local min = math.min
+local max = math.max
+local abs = math.abs
+local sqrt = math.sqrt
+local sin = math.sin
+local cos = math.cos
+local atan2 = math.atan2
+local random = math.random
+
 function module.new(width, height, stroke)
   local instance = setmetatable({}, {__index=module})
   instance.canvas = love.graphics.newCanvas(width, height)
@@ -22,18 +33,25 @@ function module.drawC(scene, duration, canvas, width, height, stroke)
   love.graphics.setCanvas(canvas)
   love.graphics.translate(width/2, height/2)
   love.graphics.scale(height/2, -height/2)
+
   while love.timer.getTime() - t < duration do
-    local x = -width/height + 2 * width/height * math.random()
-    local y = -1 + 2 * math.random()
+    local x = -width/height + 2 * width/height * random()
+    local y = -1 + 2 * random()
     local ray = trace(scene, x, y, 1)
     local h, s, l, a = unpack(ray)
-    love.graphics.push()
+    if a > 0 then
+      love.graphics.push()
       love.graphics.translate(x, y)
-      love.graphics.rotate(.1 + math.random())
+      love.graphics.rotate(.1 + random())
       local d = stroke / height
-      love.graphics.setColor(lume.hsl(h, s, l))
+      if #love.touch.getTouches() == 2 then
+        -- magic (using distance from edge for stroke size)
+        d = min(.12, .0 + .38 * abs(a))
+      end
+      love.graphics.setColor(lume.hsl(h, s, l, .9))
       love.graphics.ellipse('fill', 0, 0, d, d/3, 6)
-    love.graphics.pop()
+      love.graphics.pop()
+    end
     raysShot = raysShot + 1
   end
   love.graphics.pop()
@@ -45,28 +63,11 @@ function module:draw(scene, duration)
 end
 
 local memos = {}
-function lookup(node, precision, x, y, depth)
-  memos[node] = memos[node] or {count = 0}
-  local memo = memos[node]
-
-  local minKey
-  local minD2 = math.huge
-
-  for keys,value in ipairs(memo) do
-    local d2 = 0
-    for k,v in pairs(keys) do
-      --d2 = (x - )
-    end
-    --if minD2 <
-  end
-  table.sort(distances, function (a,b) return a[1] < b[1] end)
-  table.insert(distances, {d2, value})
-end
 
 function memoLookup(node, precision, x, y, depth)
   local r
-  local xd = x + precision * (math.random() - .5)
-  local yd = y + precision * (math.random() - .5)
+  local xd = x + precision * (random() - .5)
+  local yd = y + precision * (random() - .5)
   local xg = xd - (xd % precision) + precision / 2
   local yg = yd - (yd % precision) + precision / 2
   if love.keyboard.isDown('backspace') then
@@ -76,7 +77,7 @@ function memoLookup(node, precision, x, y, depth)
   local memo = memos[node]
   memo[xg] = memo[xg] or {}
   r = memo[xg][yg]
-  if not r or math.random() > .85 then
+  if not r or random() > .85 then
     memo[xg] = memo[xg] or {}
     r = trace(node[3], xg, yg, depth + 1)
     memo[xg][yg] = r
@@ -92,12 +93,12 @@ function trace(node, x, y, depth) -- returns ray color
     error('node has no type?!', node)
     return {1, 1, 1, 0}
   elseif node[1] == 'edge' then
-    return {0, 0, 1,  .5 - (((node[2] or 0) + y) * 100 * (node[3] or 1))}
+    return {0, 0, 1,  -((node[2] or 0) + y) * (node[3] or 1)}
   elseif node[1] == 'simplex' then
-    return {0, 1, 1, (node[3] or 1) * 100 * ((node[2] or 0) + noise.Simplex2D(x, y))}
+    return {0, 1, 1, .2 * (node[3] or 1) * ((node[2] or 0) + noise.Simplex2D(x, y))}
   elseif node[1] == 'negate' then
     local ray = trace(node[2], x, y, depth + 1)
-    ray[4] = 1 - ray[4]
+    ray[4] = -ray[4]
     return ray
   elseif node[1] == 'replicate' then
     local t = getTransform(node[3])
@@ -110,18 +111,37 @@ function trace(node, x, y, depth) -- returns ray color
   elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return trace(node[3], x, y, depth + 1)
+    local ray = trace(node[3], x, y, depth + 1)
+    ray[4] = ray[4] * max(node[2][4] or 1, node[2][5] or 1)
+    return ray
+  elseif node[1] == 'camera' then
+    local t = getTransform(node)
+    x,y = t:transformPoint(x, y)
+    local ray = trace(node[3], x, y, depth + 1)
+    ray[4] = ray[4] * (node[2][4] or 1)
+    return ray
   elseif node[1] == 'wrap' then
-    local r = (x^2 + y^2) - 1
-    local a = -math.atan2(y, x) / math.pi
-    return trace(node[2], a, r, depth + 1)
+    local a = -atan2(y, x)
+    local r = sqrt(x^2 + y^2) - 1
+    local ray = trace(node[2], a, r, depth + 1)
+    ray[4] = ray[4] * .3
+    return ray
+  elseif node[1] == 'unwrap' then
+    local a, r = x, y
+    x = (r + 1) * cos(-a)
+    y = (r + 1) * sin(-a)
+    local ray = trace(node[2], x, y, depth + 1)
+    return ray
   elseif node[1] == 'combine' then
     local ray
+    local minA = huge -- huGEE!
     for i=2, #node do
       branch = node[i]
       ray = trace(branch, x, y, depth + 1)
+      minA = min(minA, abs(ray[4]))
       if ray[4] > 0 then break end
     end
+    ray[4] = minA * ray[4] / abs(ray[4])
     return ray
   elseif node[1] == 'add' then
     local ray, a
@@ -134,21 +154,24 @@ function trace(node, x, y, depth) -- returns ray color
     return ray
   elseif node[1] == 'clip' then
     local ray
-    local min = math.huge
+    local minA = huge
     for i=2, #node do
       branch = node[i]
       ray = trace(branch, x, y, depth + 1)
-      min = math.min(min, ray[4])
+      minA = min(minA, ray[4])
     end
-    ray[4] = min
+    ray[4] = minA
     return ray
   elseif node[1] == 'tint' then
     local ray = trace(node[3], x, y, depth + 1)
-    -- hsl
     local a = node[2][4] or 1
+    -- hsl
     ray[1] = ray[1] * (1 - a) + (node[2][1] or ray[1]) * a
     ray[2] = ray[2] * (1 - a) + (node[2][2] or ray[2]) * a
     ray[3] = ray[3] * (1 - a) + (node[2][3] or ray[3]) * a
+    if node.react then
+      ray[3] = ray[3] + .2 * math.random()
+    end
     return ray
   elseif node[1] == 'memo' then
     return memoLookup(node, node[2], x, y, depth)

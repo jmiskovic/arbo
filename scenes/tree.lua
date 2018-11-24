@@ -83,7 +83,7 @@ local moon =
 
 local scene =
 {
-  position,
+  camera,
   {.4, -.3, 0.01, 1.1},
   {
     combine,

@@ -88,12 +88,14 @@ local cap =
 }
 
 local clock =
-{ combine,
+{
+  position, {0,0,0,1},
+  { combine,
   cap,
   seconds,
   minutes,
   hours,
-  face,
+  {memo, .02, face},
 ---[[
   tick = function (scene, t)
     local time = os.date('*t')
@@ -105,6 +107,7 @@ local clock =
     --print(Now.sec)
   end,
 --]]
+  }
 }
 
 return clock

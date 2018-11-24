@@ -9,7 +9,7 @@ local C = {
   sky_blue = {0.55, 1.00, 0.43},
 }
 
-local cloudShape = {position, {0, .303,  0, .124/3, .065/3},  {simplex, -.2}}
+local cloudShape = {position, {0, .303,  0, .124, .025},  {simplex, -.2}}
 
 local scene =
 {
@@ -26,7 +26,7 @@ local scene =
         {tint, {0.60, 0.21, 0.63}, {
           clip,
           cloudShape,
-          {position, {0.01, .02,  0, .124/3, .045/3},  {simplex, -.2}},
+          {position, {0.01, -.006},  cloudShape},
           {position, {0, -.2, .5}, {edge}},
           {position, {0, .06, 0}, {edge}}
         }},

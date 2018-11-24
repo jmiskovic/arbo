@@ -15,40 +15,76 @@ local egg =
   }
 }
 
-local eggHighlight = {
+local eggShade = {
   tint, {nil, 0, 0, .5},
   {
     clip,
-    {position, {-.2, 0.3, 0, 1.2}, {negate, eggShape}},
+    {position, {-.2, 0.3, 0, 1.1}, {negate, eggShape}},
     egg,
   }
 }
 
-local grass =
+local grass = {tint, {0.36, 0.38, 0.39}, {position, {0, -.4}, {edge}}}
+
+local flowers =
 {
   clip,
-  {position, {0, -.4}, {edge}},
+  grass,
   {
     combine,
-    {--[[flowers]] tint, {0.96, 1.00, 0.50}, {position, {0, 0.03, .03, .5, .2}, {simplex, -.88, .1}}},
-    {--[[flowers]] tint, {0.14, 0.99, 0.69}, {position, {0, 0.03, .03, .5, .2}, {simplex, -.8, .1}}},
-    {--[[flowers]] tint, {0.42, 0.42, 0.25}, {position, {0, 0, .03, .5, .2}, {simplex, -.85, .1}}},
-    {--[[grass]] tint, {0.36, 0.38, 0.39}, {position, {0, -.4}, {edge}}},
+    {--[[flowers]] tint, {0.96, 1.00, 0.50}, {position, {0, 0.03, .03, .5, .2}, {simplex, -.88}}},
+    {--[[flowers]] tint, {0.14, 0.99, 0.69}, {position, {0, 0.03, .03, .5, .2}, {simplex, -.8}}},
+    {--[[flowers]] tint, {0.42, 0.42, 0.25}, {position, {0, 0, .03, .5, .2}, {simplex, -.85}}},
   }
+}
+
+local squashTrails = {5.18, -3.42, 0.04, 7.03, 3.01}
+
+local trails =
+{tint, {0.08, 0.68, 0.67},
+  {
+    clip,
+    grass,
+    {position, squashTrails, {simplex}},
+    {position, squashTrails, {negate, {simplex, -.2}}}
+  }
+}
+
+local portal = {
+  tint, {0,0,1,.000001},
+  {
+    clip,
+    trails,
+    {
+      position, {2,-.18,0,.355,
+        react = function(scene)
+          scene[3] = require('scenes/night')
+        end
+      },
+      {
+        wrap, {edge},
+      }
+    },
+  },
 }
 
 local scene =
 {
-  position, {0, 0, .006, .8},
+  camera, {0, 0, .006, .8},
   {
     combine,
-    eggHighlight,
+    eggShade,
     egg,
+    portal,
+    flowers,
+    trails,
     {--[[shadow]] tint, {0.71, 0.30, 0.11}, {position, {0, -.9, 0, .7, .1}, eggShape}},
     grass,
+    {--[[grass]] tint, {0.36, 0.38, 0.39}, {position, {0, -.4}, {edge}}},
     {--[[horizon]] tint, {0.55, 0.85, 0.75}, {position, {0, -.35}, {edge}}},
     {--[[sky]] tint, {0.55, 1.00, 0.43}, {position, {0, -100, .5}, {edge}}},
-  }
+  },
+
 }
 
 return scene

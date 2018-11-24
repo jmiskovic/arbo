@@ -4,6 +4,8 @@ edge      = 'edge'
 simplex   = 'simplex'
 -- {position, {dx, dy, rot, sx, sy, ox, oy, kx, ky}, arbo}
 position  = 'position'
+-- {camera, {dx, dy, rot, sx, sy, ox, oy, kx, ky}, arbo}
+camera  = 'camera'
 -- {clip, arbo1, arbo2, ...}
 clip = 'clip'
 -- {combine, arbo1, arbo2, ...}
