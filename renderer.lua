@@ -37,8 +37,7 @@ function module.drawC(scene, duration, canvas, width, height, stroke)
   while love.timer.getTime() - t < duration do
     local x = -width/height + 2 * width/height * random()
     local y = -1 + 2 * random()
-    local ray = trace(scene, x, y, 1)
-    local h, s, l, a = unpack(ray)
+    local h, s, l, a = trace(scene, x, y, {}, 1)
     if a > 0 then
       love.graphics.push()
       love.graphics.translate(x, y)
@@ -64,8 +63,8 @@ end
 
 local memos = {}
 
-function memoLookup(node, precision, x, y, depth)
-  local r
+function memoLookup(node, precision, x, y, env, depth)
+  local hsla
   local xd = x + precision * (random() - .5)
   local yd = y + precision * (random() - .5)
   local xg = xd - (xd % precision) + precision / 2
@@ -76,108 +75,137 @@ function memoLookup(node, precision, x, y, depth)
   memos[node] = memos[node] or {count = 0}
   local memo = memos[node]
   memo[xg] = memo[xg] or {}
-  r = memo[xg][yg]
-  if not r or random() > .85 then
+  local hsla = memo[xg][yg]
+  if not hsla or random() > .85 then
     memo[xg] = memo[xg] or {}
-    r = trace(node[3], xg, yg, depth + 1)
-    memo[xg][yg] = r
+    h,s,l,a = trace(node[3], xg, yg, env, depth + 1)
+    memo[xg][yg] = {h,s,l,a}
     memo.count = memo.count + 1
+  else
+    h,s,l,a = unpack(hsla)
   end
-  return {unpack(r)} -- create a copy, otherwise later ray manipulations leak into memo
+  return h, s, l, a
 end
 
-function trace(node, x, y, depth) -- returns ray color
-  if depth > 15 then return {0, 1, 1, 0} end
+function R(exp, env, default) -- resolve
+  if type(exp) == 'number' then
+    return exp
+  elseif type(exp) == 'string' then
+    return env[exp] or default
+  elseif type(exp) == 'nil' then
+    return default
+  end
+end
 
+function trace(node, x, y, env, depth) -- returns ray color
+  if depth > 15 then return 0, 1, 1, 0 end
   if type(node[1]) ~= 'string' then
     error('node has no type?!', node)
-    return {1, 1, 1, 0}
+    return .9, 1, .5, 1 -- color errors with magenta color
+
   elseif node[1] == 'edge' then
-    return {0, 0, 1,  -((node[2] or 0) + y) * (node[3] or 1)}
+    return 0, 0, 1,  -(R(node[2], env, 0) + y) * R(node[3], env, 1)
+
   elseif node[1] == 'simplex' then
-    return {0, 1, 1, .2 * (node[3] or 1) * ((node[2] or 0) + noise.Simplex2D(x, y))}
-  elseif node[1] == 'negate' then
-    local ray = trace(node[2], x, y, depth + 1)
-    ray[4] = -ray[4]
-    return ray
-  elseif node[1] == 'replicate' then
-    local t = getTransform(node[3])
-    for i = 1, node[2] do
-      ray = trace(node[4], x, y, depth + 1)
-      x,y = t:transformPoint(x, y)
-      if ray[4] > 0 then break end
-    end
-    return ray
+    return 0, 1, 1, .2 * R(node[3], env, 1) * (R(node[2], env, 0) + noise.Simplex2D(x, y))
+
   elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    local ray = trace(node[3], x, y, depth + 1)
-    ray[4] = ray[4] * max(node[2][4] or 1, node[2][5] or 1)
-    return ray
+    local h,s,l,a = trace(node[3], x, y, env, depth + 1)
+    a = a * max(R(node[2][4], env, 1), R(node[2][5], env, 1))
+    return h,s,l,a
+
   elseif node[1] == 'camera' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    local ray = trace(node[3], x, y, depth + 1)
-    ray[4] = ray[4] * (node[2][4] or 1)
-    return ray
+    local h,s,l,a = trace(node[3], x, y, env, depth + 1)
+    a = a * R(node[2][4], env, 1)
+    return h,s,l,a
+
   elseif node[1] == 'wrap' then
-    local a = -atan2(y, x)
+    local ph = -atan2(y, x)
     local r = sqrt(x^2 + y^2) - 1
-    local ray = trace(node[2], a, r, depth + 1)
-    ray[4] = ray[4] * .3
-    return ray
+    local h,s,l,a = trace(node[2], ph, r, env, depth + 1)
+    a = a * .3
+    return h,s,l,a
+
   elseif node[1] == 'unwrap' then
-    local a, r = x, y
-    x = (r + 1) * cos(-a)
-    y = (r + 1) * sin(-a)
-    local ray = trace(node[2], x, y, depth + 1)
-    return ray
+    local ph, r = x, y
+    x = (r + 1) * cos(-ph)
+    y = (r + 1) * sin(-ph)
+    local h,s,l,a = trace(node[2], x, y, env, depth + 1)
+    return h,s,l,a
+
+  elseif node[1] == 'negate' then
+    local h,s,l,a = trace(node[2], x, y, env, depth + 1)
+    a = -a
+    return h,s,l,a
+
+  elseif node[1] == 'replicate' then
+    local h,s,l,a
+    local t = getTransform(node[3])
+    for i = 1, node[2] do
+      h,s,l,a = trace(node[4], x, y, env, depth + 1)
+      if a > 0 then break end
+      x,y = t:transformPoint(x, y)
+    end
+    return h,s,l,a
+
   elseif node[1] == 'combine' then
-    local ray
+    local h,s,l,a
     local minA = huge -- huGEE!
     for i=2, #node do
       branch = node[i]
-      ray = trace(branch, x, y, depth + 1)
-      minA = min(minA, abs(ray[4]))
-      if ray[4] > 0 then break end
+      h,s,l,a = trace(branch, x, y, env, depth + 1)
+      minA = min(minA, abs(a))
+      if a > 0 then break end
     end
-    ray[4] = minA * ray[4] / abs(ray[4])
-    return ray
-  elseif node[1] == 'add' then
-    local ray, a
-    a = 0
+    a = minA * a / abs(a) -- minimal a, but with correct sign
+    return h,s,l,a
+
+  elseif node[1] == 'sum' then
+    local h, s, l, a, sumA
+    sumA = 0
     for i=2, #node do
-      ray = trace(node[i], x, y, depth + 1)
-      a = a + ray[4]
+      h,s,l,a = trace(node[i], x, y, env, depth + 1)
+      sumA = sumA + a
     end
-    ray[4] = a
-    return ray
+    a = sumA
+    return h,s,l,a
+
   elseif node[1] == 'clip' then
-    local ray
-    local minA = huge
+    local h,s,l,a
+    local minA = huge -- huge! o_O
     for i=2, #node do
       branch = node[i]
-      ray = trace(branch, x, y, depth + 1)
-      minA = min(minA, ray[4])
+      h,s,l,a = trace(branch, x, y, env, depth + 1)
+      minA = min(minA, a)
     end
-    ray[4] = minA
-    return ray
+    a = minA
+    return h,s,l,a
+
   elseif node[1] == 'tint' then
-    local ray = trace(node[3], x, y, depth + 1)
-    local a = node[2][4] or 1
-    -- hsl
-    ray[1] = ray[1] * (1 - a) + (node[2][1] or ray[1]) * a
-    ray[2] = ray[2] * (1 - a) + (node[2][2] or ray[2]) * a
-    ray[3] = ray[3] * (1 - a) + (node[2][3] or ray[3]) * a
+    local h,s,l,a = trace(node[3], x, y, env, depth + 1)
+    local intensity = R(node[2][4], env, 1)
+    h = h * (1 - intensity) + R(node[2][1], env, h) * intensity
+    s = s * (1 - intensity) + R(node[2][2], env, s) * intensity
+    l = l * (1 - intensity) + R(node[2][3], env, l) * intensity
     if node.react then
-      ray[3] = ray[3] + .2 * math.random()
+      l = l + .2 * math.random() -- pixie dust
     end
-    return ray
+    return h,s,l,a
+
   elseif node[1] == 'memo' then
-    return memoLookup(node, node[2], x, y, depth)
+    return memoLookup(node, R(node[2], env), x, y, env, depth)
+
+  elseif node[1] == 'interact' then
+    return trace(node[3], x, y, setmetatable(node[2], {__index=env}), depth + 1)
+    --return trace(node[3], x, y, node[2], depth + 1)
+
   else
     error('unrecognized type', node)
-    return {1, 1, 1, 0}
+    return .9, 1, .5, 1 -- color errors with magenta color
   end
 end
 

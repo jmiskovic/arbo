@@ -29,40 +29,44 @@ local leverShape =
 }
 
 local lever =
-{position,
-  {0, -.35, .25 - .5/6,
-    react = {
-      {
-        case= {active= 1},
-        name= 'off',
-        {set, 'active', 0},
-        {set, 3, .25 - .5/6,}
+{
+  interact,
+  {onoff = .25 - .5/6},
+  {position,
+    {0, -.35, 'onoff',
+      react = {
+        {
+          case= {active= 1},
+          name= 'off',
+          {set, 'active', 0},
+          {set, 3, .25 - .5/6,}
+        },
+        {
+          case= {active= 0},
+          name= 'on',
+          {set, 'active', 1},
+          {set, 3, .25 + .5/6,}
+        },
       },
-      {
-        case= {active= 0},
-        name= 'on',
-        {set, 'active', 1},
-        {set, 3, .25 + .5/6,}
-      },
+      active= 0,
     },
-    active= 0,
-  },
-  {combine,
-    {tint, -- highlight
-      {0.77, 0.70, 0.57},
-      {clip,
-        leverShape,
-        {position,
-          {-0.0, -.08, 0, .9, .9},
+    {combine,
+      {tint, -- highlight
+        {0.77, 0.70, 0.57},
+        {clip,
           leverShape,
-        }
+          {position,
+            {-0.0, -.08, 0, .9, .9},
+            leverShape,
+          }
+        },
+      },
+      {tint,
+        {0.77, 0.94, 0.43},
+        leverShape,
       },
     },
-    {tint,
-      {0.77, 0.94, 0.43},
-      leverShape,
-    },
-  },
+  }
 }
 
 return

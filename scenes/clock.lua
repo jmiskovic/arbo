@@ -49,11 +49,48 @@ local hours =
 
 local face =
 { combine,
-  { tint,
-    {.15, .2, .8},
-    { wrap,
-      { edge}
+  {
+    interact,
+    {facehue=.15},
+    { tint,
+      {'facehue', .5, .8},
+      { wrap,
+        { edge }
+      },
     },
+    {
+      {
+        case= {facehue = .15},
+        name= 'enlarge',
+        {set, 'facehue', .3}
+      },
+      {
+        case= {facehue = .3},
+        name= 'shrink',
+        {set, 'facehue', .45}
+      },
+      {
+        case= {facehue = .45},
+        name= 'shrink',
+        {set, 'facehue', .6}
+      },
+      {
+        case= {facehue = .6},
+        name= 'shrink',
+        {set, 'facehue', .75}
+      },
+      {
+        case= {facehue = .75},
+        name= 'shrink',
+        {set, 'facehue', .9}
+      },
+      {
+        case= {facehue = .9},
+        name= 'shrink',
+        {set, 'facehue', .15}
+      },
+
+    }
   }
 }
 
@@ -89,25 +126,19 @@ local cap =
 
 local clock =
 {
-  position, {0,0,0,1},
-  { combine,
+  combine,
   cap,
   seconds,
   minutes,
   hours,
-  {memo, .02, face},
----[[
+  face,
+  {tint, {.72,.23,.2}, {wrap, {position, {0, -1, .5}, {edge}}}},
   tick = function (scene, t)
     local time = os.date('*t')
     scene[3][3][2][3] = .5/2 -time.sec  / 60 * 2 * .5
     scene[4][3][2][3] = .5/2 -time.min  / 60 * 2 * .5
     scene[5][3][2][3] = .5/2 -time.hour / 24 * 2 * .5
-    --print(Now.hour)
-    --print(Now.min)
-    --print(Now.sec)
   end,
---]]
-  }
 }
 
 return clock

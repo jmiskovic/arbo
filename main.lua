@@ -1,7 +1,7 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = {camera, {0,0,.006,1}, require('scenes/tree')} --park/location_01')}
+local scene = {camera, {0,0,.006,1}, require('scenes/clock')}
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
@@ -59,21 +59,21 @@ function getTransform(node)
 end
 
 function interact(node, x, y)
-  if node.react then
+  if node[1] == 'interact' and node[4] then
     if x^2 + y^2 < 1 then
       print(string.format('interacted r=%.2f, x=%.2f, y=%.2f', math.sqrt(x*x+y*y), x, y))
-      if type(node.react) == 'function' then
+      if type(node[4]) == 'function' then
         print('function')
-        node.react(scene)
+        node[4](scene)
         return true
-      elseif type(node.react) == 'table' then
+      elseif type(node[4]) == 'table' then
         print('table')
         local closeness = {} -- {case, closeness}
-        for i, reaction in ipairs(node.react) do
+        for i, reaction in ipairs(node[4]) do
           closeness[reaction] = 0
           for key, condition in pairs(reaction.case) do
-            closeness[reaction] = closeness[reaction] + (condition - (node[key] or 0))^2
-            print(key, node[key])
+            closeness[reaction] = closeness[reaction] + (condition - (node[2][key] or 0))^2
+            print(key, node[2][key], condition)
           end
           print('distance from action', reaction.name, closeness[reaction])
         end
@@ -87,7 +87,7 @@ function interact(node, x, y)
         if closest then
           for i, instruction in ipairs(closest) do
             if instruction[1] == 'set' then
-              node[instruction[2]] = instruction[3]
+              node[2][instruction[2]] = instruction[3]
             end
           end
         end
@@ -146,7 +146,7 @@ end
 function love.update(dt)
   time = time + dt
   --run ticks across all nodes
-  if time % .2 < dt then
+  if time % 1 < dt then
     for node, tick in pairs(nodeTicks) do
       tick(node, time)
     end
