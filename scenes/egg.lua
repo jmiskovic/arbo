@@ -58,9 +58,8 @@ local portal = {
     {
       position, {2,-.18,0,.355,
         react = function(scene)
-          scene[3] = require('scenes/night')
-        end
-      },
+          scene[3] = require('scenes/tree')
+        end },
       {
         wrap, {edge},
       }

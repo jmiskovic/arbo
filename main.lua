@@ -1,12 +1,12 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = {camera, {0,0,.006,1}, require('scenes/clock')}
+local scene = {camera, {0,0,0,1}, require('scenes/studio')}
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
 local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
-local renderer = require('renderer').new(sw, sh)
+local renderer = require('renderer').new(sw, sh, 10)
 local treeverse = require('treeverse')
 local editor = require('editor').new(sw, sh, scene)
 
@@ -58,14 +58,13 @@ function getTransform(node)
   return nodeTransforms[node]
 end
 
-function interact(node, x, y)
+local function interact(node, x, y)
   if node[1] == 'interact' and node[4] then
     if x^2 + y^2 < 1 then
       print(string.format('interacted r=%.2f, x=%.2f, y=%.2f', math.sqrt(x*x+y*y), x, y))
       if type(node[4]) == 'function' then
         print('function')
-        node[4](scene)
-        return true
+        return node[4](scene) or true
       elseif type(node[4]) == 'table' then
         print('table')
         local closeness = {} -- {case, closeness}
@@ -103,7 +102,7 @@ function interact(node, x, y)
   elseif node[1] == 'position' or node[1] == 'camera' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return interact(node[2], x, y) or interact(node[3], x, y)
+    return interact(node[3], x, y)
   elseif node[1] == 'wrap' then
     local r = (x^2 + y^2) - 1
     local a = -math.atan2(y, x) / math.pi
@@ -116,8 +115,8 @@ function interact(node, x, y)
     local i = false
     for i=2, #node do
       branch = node[i]
-      i = interact(branch, x, y)
-      if i then break end
+      local done = interact(branch, x, y)
+      if done then break end
     end
     return i
   else
@@ -154,10 +153,9 @@ function love.update(dt)
   treeverse.update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
-  --if #love.touch.getTouches() == 0 then
-  --  love.timer.sleep(.02)
-  --end
-  love.timer.sleep(.02)
+  if #love.touch.getTouches() == 0 then
+    love.timer.sleep(.02)
+  end
   for i, touchId in ipairs(love.touch.getTouches()) do
     tInit[i] = {love.touch.getPosition(touchId)}
     tInit[i+1] = nil
@@ -241,8 +239,10 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
       math.sqrt((tCurr[1][1] - tCurr[2][1])^2 + (tCurr[1][2] - tCurr[2][2])^2) -
       math.sqrt((tInit[1][1] - tInit[2][1])^2 + (tInit[1][2] - tInit[2][2])^2))
     editor:pinchmoved(dx, dy, rot, scl)
+    renderer:resetStroke()
   elseif #love.touch.getTouches() == 3 then
     renderer.stroke = math.max(5, renderer.stroke + 10 * dy / sh)
+    renderer:resetStroke()
   end
 end
 

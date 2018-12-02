@@ -13,6 +13,8 @@ local function exportWalk(node)
           table.insert(conns, {v[1], v[2]})
         end
         table.insert(conns, {index, childIndex})
+      elseif type(child) == 'function' then
+        label = label .. ', ' .. 'function()'
       else
         label = label .. ', ' .. child
       end
