@@ -28,7 +28,7 @@ local tree = {
         },
         {
           position,
-          {-.05, .45, -.1, .6},
+          {-.05, .45, -.1, .7},
           branch
         },
         {
@@ -48,22 +48,14 @@ tree[3][3][3][5][3] = tree[3]
 
 local pondShape = {
   position,
-  {-.4, -.52, .52, 3.2, .54},
-  {
-    clip,
-    {
-      position,
-      {-.73, 2.71, 0, 1.6},
-      {simplex}
-    },
-    { wrap, {edge}},
-  }
+  {-1.542, 3.146, -0.014, 5.07, .71},
+  {simplex}
 }
 
 local moon =
     { --moon
       tint,
-      {0.39, 0.33, 0.81, 1.00},
+      {0.13, 0.48, 0.86, 1.00},
       {position, {-.63, .55, 0.03, .3},
         {
           clip,
@@ -83,63 +75,66 @@ local moon =
 
 local scene =
 {
-  camera,
-  {.4, -.3, 0.01, 1.1},
-  {
-    combine,
-    tree,
-    { -- reflection
+  combine,
+  tree,
+  { -- reflection
+    clip,
+    pondShape,
+    {
+      memo, .04,
+      {position, {0, -.0, 0, 1, -.9},
+        {combine,
+          tree,
+          moon
+        }
+      }
+    },
+  },
+
+  { -- pond
+    tint,
+    {.57, .62, .12, 1},
+    {
       clip,
       pondShape,
-      {
-        memo, .04,
-        {position, {0, -.0, 0, 1, -.9},
-          {combine,
-            tree,
-            moon
-          }
-        }
-      },
-    },
-
-    { -- pond
-      tint,
-      {.28, .31, .7, 1},
-      pondShape
-    },
+      {edge}
+    }
+  },
+  {
+    tint,
+    {.96, .26, .55, 1},
     {
-      tint,
-      {.44, .26, .42, 1},
-      {position, {0, .03},
-        pondShape
-      }
-    },
+      clip,
+      {position, {0, .03},pondShape},
+      {edge}
+    }
+  },
 
-    { -- grass
-      tint,
-      {0.10, 0.95, 0.58, 1.00},
+  { -- grass
+    tint,
+    {0.10, 0.95, 0.58, 1.00},
+    {
+      clip,
       {
-        clip,
-        {
-          position, {1.8, 0, -.02, 3.2, .28},
-          {simplex, 0, 50}
-        },
-        {edge}
-      }
-    },
-    {tint, {.95, .58, .43, 1}, {edge}},
+        position, {1.8, 0, -.02, 3.2, .28},
+        {simplex, 0, 50}
+      },
+      {edge}
+    }
+  },
+  {tint, {.95, .58, .43, 1}, {edge}},
 
-    -- horizon
-    { tint, {0.65, .4, 0.4, 1}, {position, {0, 0.05}, {edge}}},
-    moon,
-    { --sky
-      tint,
-      {0.59, 0.51, 0.19, 1.00},
-      {position, {0, -100, .5}, {edge}}
-    },
+  -- horizon
+  { tint, {0.65, .4, 0.24, 1}, {position, {0, 0.05}, {edge}}},
+  moon,
+  { --sky
+    tint,
+    {0.64, 0.43, 0.17, 1.00},
+    {position, {0, -5, .5}, {edge}}
+  },
 
-  }
 }
+
 
 --[[
 local count = 30

@@ -12,14 +12,14 @@ local egg =
     combine,
     {tint, {0.86, 0.99, 0.36}, {position, {0,0,0,.75,1}, {simplex, -.2}}},
     {tint, {0.60, 0.97, 0.30}, {position, {0, -100, .5}, {edge}}},
-  }
+  },
 }
 
 local eggShade = {
   tint, {nil, 0, 0, .5},
   {
     clip,
-    {position, {-.2, 0.3, 0, 1.1}, {negate, eggShape}},
+    {negate, {position, {-.2, 0.3, 0, 1.1}, eggShape}},
     egg,
   }
 }
@@ -69,21 +69,16 @@ local portal = {
 
 local scene =
 {
-  camera, {0, 0, .006, .8},
-  {
-    combine,
-    eggShade,
-    egg,
-    portal,
-    flowers,
-    trails,
-    {--[[shadow]] tint, {0.71, 0.30, 0.11}, {position, {0, -.9, 0, .7, .1}, eggShape}},
-    grass,
-    {--[[grass]] tint, {0.36, 0.38, 0.39}, {position, {0, -.4}, {edge}}},
-    {--[[horizon]] tint, {0.55, 0.85, 0.75}, {position, {0, -.35}, {edge}}},
-    {--[[sky]] tint, {0.55, 1.00, 0.43}, {position, {0, -100, .5}, {edge}}},
-  },
-
+  combine,
+  eggShade,
+  egg,
+  portal,
+  flowers,
+  trails,
+  {--[[shadow]] tint, {0.71, 0.30, 0.11}, {position, {0, -.9, 0, .7, .1}, eggShape}},
+  grass,
+  {--[[horizon]] tint, {0.55, 0.85, 0.75}, {position, {0, -.35}, {edge}}},
+  {--[[sky]] tint, {0.55, 1.00, 0.43}, {position, {0, -100, .5}, {edge}}},
 }
 
 return scene

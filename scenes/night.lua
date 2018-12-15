@@ -13,7 +13,7 @@ local verticals =
     },
     {
       position,
-      {0, -.4, .005},
+      {0, -.4, 0},
       {edge, 0, 555}
     }
   }
@@ -33,12 +33,12 @@ local windows =
         simplex, -.1, 15
       }
     },
-    verticals,
     {
       position,
       {0, 0, 0, .05, 5000},
       {simplex, -.1, 2}
-    }
+    },
+    verticals,
   }
 }
 
@@ -55,14 +55,13 @@ local smog =
         simplex
       }
     },
-    {edge, -2.3, .02}
+    {edge, .6}
   }
 }
 
 local skyscrapers =
 {
   combine,
-  --smog,
   windows,
   verticals,
   {
@@ -106,7 +105,7 @@ local city =
     {nil, 0, 0, .8},
     {
       position,
-      {3, .5, -0.01, .3, .8},
+      {3, .6, -0.0, .3, .8},
       skyscrapers
     }
   },

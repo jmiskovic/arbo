@@ -33,7 +33,7 @@ local lever =
   interact,
   {onoff = .25 - .5/6},
   {position,
-    {0, -.35, 'onoff',
+    {0, -.35, .25 - .5/6,
       react = {
         {
           case= {active= 1},

@@ -8,7 +8,7 @@ shapes.circle =
   {edge}
 }
 
-shapes.rectangle =
+shapes.square =
 {
   clip,
   {position, { 0,  1, .0}, {edge}},
