@@ -34,4 +34,15 @@ function persist.load(filename)
   return data
 end
 
+function persist.list()
+  print(love.filesystem.getAppdataDirectory()..love.filesystem.getIdentity())
+  local files = love.filesystem.getDirectoryItems('.')
+  --[[
+  --]]
+  print(#files)
+  for k, v in pairs(files) do
+    print(k,v)
+  end
+end
+
 return persist

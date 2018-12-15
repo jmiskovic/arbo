@@ -1,14 +1,14 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = {camera, {0,0,0,1}, require('scenes/studio')}
+local scene = {position, {0,0,0,1}, {edge}}
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
-local sr = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
-local renderer = require('renderer').new(sw, sh, 10)
-local treeverse = require('treeverse')
-local editor = require('editor').new(sw, sh, scene)
+local screenRatio = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
+local renderer = require('renderer').new(sw, sh, 25)
+local treeverse = require('treeverse').new(sw, sh, scene)
+editor = require('editor').new(sw, sh, scene)
 
 local datetime = os.date('*t')
 local time = datetime.hour * 3600 + datetime.min * 60 + datetime.sec
@@ -16,6 +16,8 @@ local renderTime = .04
 
 local pinchInitial = {}
 local tInit = {} -- initial touch positions (stored when number of touches changes)
+
+guiVisible = true
 
 transform = love.math.newTransform()
 -- transform matrix calculation caching per node
@@ -32,15 +34,13 @@ local function walkNodes(node, depth)
     if node.tick then
       nodeTicks[node] = node.tick
     end
-    if node[1] == 'position' or node[1] == 'camera' then
+    if node[1] == 'position' then
       nodeTransforms[node] = transform:setTransformation(
           node[2][1],                 -- dx
           node[2][2],                 -- dy
-          (node[2][3] or 0) * 2 * math.pi,   -- rotation, have to convert 0..1 to 0..2pi
+         (node[2][3] or 0) * 2 * math.pi, -- rotation, have to convert 0..1 to 0..2pi
           node[2][4],                 -- sx
-          node[2][5],                 -- sy
-          node[2][6],                 -- ox
-          node[2][7]                  -- oy
+          node[2][5]                  -- sy
         ):inverse()
     end
     for i,child in ipairs(node) do
@@ -99,7 +99,7 @@ local function interact(node, x, y)
      node[1] == 'simplex' or
      node[1] == 'union' then
     return false
-  elseif node[1] == 'position' or node[1] == 'camera' then
+  elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
     return interact(node[3], x, y)
@@ -145,17 +145,19 @@ end
 function love.update(dt)
   time = time + dt
   --run ticks across all nodes
-  if time % 1 < dt then
+  if time % .5 < dt then
     for node, tick in pairs(nodeTicks) do
       tick(node, time)
+      --treeverse.renderer:resetStroke()
     end
   end
-  treeverse.update(dt)
+  treeverse:update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
   if #love.touch.getTouches() == 0 then
-    love.timer.sleep(.02)
+    love.timer.sleep(.04)
   end
+  love.timer.sleep(.01)
   for i, touchId in ipairs(love.touch.getTouches()) do
     tInit[i] = {love.touch.getPosition(touchId)}
     tInit[i+1] = nil
@@ -167,31 +169,45 @@ local frames = 1000
 function love.draw()
   local white = {1, 1, 1}
   local rayCount = 0
-  rayCount = renderer:draw(scene, renderTime)
-  love.graphics.setColor(1, 1, 1)
-  love.graphics.draw(renderer.canvas)
-  if #love.touch.getTouches() == 1 then
-    editor:draw()
-    treeverse.draw()
+
+  if true then
+    love.graphics.setColor(1, 1, 1, 1)
+    treeverse:draw()
+  else
+    rayCount = renderer:draw(scene, renderTime)
     love.graphics.setColor(1, 1, 1)
-    frames = .96 * frames + .04 * rayCount
-    love.graphics.print(string.format('%.1fk | %d fps | %d stroke', frames / renderTime / 1000, love.timer.getFPS(), renderer.stroke))
+    love.graphics.draw(renderer.canvas)
+    if #love.touch.getTouches() == 1 then
+      love.graphics.setColor(1, 1, 1)
+      editor:draw()
+      frames = .96 * frames + .04 * rayCount
+      love.graphics.print(string.format('%.1fk | %d fps | %d stroke | %.1f opacity ', frames / renderTime / 1000, love.timer.getFPS(), treeverse.renderer.stroke, renderer.opacity))
+    end
+  end
+  if guiVisible then
+    love.graphics.setColor(1, 1, 1, 1)
+    editor:draw()
+    treeverse:drawIcons()
+    love.graphics.print(string.format('%.1fk | %d fps | %d stroke | %.1f opacity ', frames / renderTime / 1000, love.timer.getFPS(), treeverse.renderer.stroke, treeverse.renderer.opacity))
   end
 end
 
 function love.keypressed(key)
   if key == 'escape' then
-    love.event.quit()
+    guiVisible = not guiVisible
+  elseif key == 'f1' then
+    local node, parent = editor:getSelected()
   elseif key == 'f11' then
     love.window.setFullscreen(not love.window.getFullscreen())
   elseif key == 'f2' then
-    persist.store(scene, 'scene.lua')
+    persist.store(scene, 'scene.scn')
   elseif key == 'f5' then
-    loaded = persist.load('scene.lua')
+    loaded = persist.load('scene.scn')
     print('loaded', loaded)
     if loaded then
       scene = loaded
       editor = require('editor').new(sw, sh, scene)
+      treeverse = require('treeverse').new(sw, sh, scene)
     end
   end
 end
@@ -218,8 +234,10 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
 end
 
 function love.touchmoved(id, x, y, dx, dy, pressure)
+  dx, dy = dx / love.graphics.getDPIScale(), dy / love.graphics.getDPIScale()
   love.mouse.setPosition(x, y)
-  if #love.touch.getTouches() == 1 then
+  treeverse.touchmoved(id, x, y, dx, dy, pressure)
+  if #love.touch.getTouches() == 1 and guiVisible then
     editor:touchmoved(id, x, y, dx, dy, pressure)
     treeverse.touchmoved(id, x, y, dx, dy, pressure)
   elseif #love.touch.getTouches() == 2 and #tInit == 2 then
@@ -227,26 +245,28 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
     local _, id2 = next(love.touch.getTouches(), 1)
     local tCurr = {{love.touch.getPosition(id1)}, {love.touch.getPosition(id2)}}
     local dx = ((tCurr[1][1] + tCurr[2][1]) / 2 -
-                (tInit[1][1] + tInit[2][1]) / 2) * .0001
+                (tInit[1][1] + tInit[2][1]) / 2) * .0003
     local dy = ((tCurr[1][2] + tCurr[2][2]) / 2 -
-                (tInit[1][2] + tInit[2][2]) / 2) * -.0001
-    local rot = -.01 * (
+                (tInit[1][2] + tInit[2][2]) / 2) * -.0003
+    local rot = -.03 * (
         math.atan2(tCurr[1][2] - tCurr[2][2], tCurr[1][1] - tCurr[2][1]) -
         math.atan2(tInit[1][2] - tInit[2][2], tInit[1][1] - tInit[2][1])
       )
     rot = math.abs(rot) > .01 and 0 or rot -- stupid fix for angle wrap around
-    local scl = 1 + .0001 * (
+    local scl = 1 + .0003 * (
       math.sqrt((tCurr[1][1] - tCurr[2][1])^2 + (tCurr[1][2] - tCurr[2][2])^2) -
       math.sqrt((tInit[1][1] - tInit[2][1])^2 + (tInit[1][2] - tInit[2][2])^2))
     editor:pinchmoved(dx, dy, rot, scl)
     renderer:resetStroke()
   elseif #love.touch.getTouches() == 3 then
-    renderer.stroke = math.max(5, renderer.stroke + 10 * dy / sh)
-    renderer:resetStroke()
+    treeverse.renderer.stroke = math.max(2, treeverse.renderer.stroke + 10 * dy / sh)
+    treeverse.renderer.opacity = math.max(.1, treeverse.renderer.opacity + .5 * dx / sh)
   end
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
-  love.mousereleased(x, y, 1, true, 1)
+  if #love.touch.getTouches() == 0 and guiVisible then
+    treeverse:mousereleased(x, y, button, istouch, presses)
+  end
 end
 

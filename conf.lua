@@ -9,12 +9,17 @@ function love.conf(t)
     [6] = {1920, 1080}, -- most common desktop full screen
     [7] = {2960, 1440}, -- Samsung Galaxy S8
     [8] = {720, 1280},  -- most common Android resolution in portrait
+    wut = {2.4047058823529 * 752, 2.4047058823529 * 425}, -- wut?
   }
   t.window.title = "arbo"
-  t.window.fullscreen = not false
+  t.window.fullscreen = not true
   t.window.resizable = true
   t.window.vsync = false
-  t.window.width, t.window.height = unpack(resolutions[0])
+  t.window.width, t.window.height = unpack(resolutions[3])
   t.window.x = 0
   love.filesystem.setIdentity('arbo')
 end
+
+-- HTC One M8: 1080 x 1920 pixels, 16:9 ratio (~469 ppi density)
+-- love.graphics.getHeight()   449
+-- love.graphics.getDPIScale() 2.4053452115813

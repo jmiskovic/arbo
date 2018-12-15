@@ -4,8 +4,6 @@ edge      = 'edge'
 simplex   = 'simplex'
 -- {position, {dx, dy, rot, sx, sy, ox, oy, kx, ky}, arbo}
 position  = 'position'
--- {camera, {dx, dy, rot, sx, sy, ox, oy, kx, ky}, arbo}
-camera  = 'camera'
 -- {wrap, arbo}
 wrap      = 'wrap'
 -- {unwrap, arbo}

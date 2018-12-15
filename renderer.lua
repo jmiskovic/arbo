@@ -1,5 +1,11 @@
 local module = {}
 
+local traceDistance     = not true
+local progressiveVision = true
+
+local maxStroke = 150 / love.graphics.getDPIScale()
+local strokeDecay = traceDistance and 500000 or 1000000
+
 local lume = require('lume')
 local noise = require('noise')
 
@@ -14,59 +20,72 @@ local cos = math.cos
 local atan2 = math.atan2
 local random = math.random
 
-function module.new(width, height, stroke)
+function module.new(width, height, stroke, opacity)
   local instance  = setmetatable({}, {__index=module})
   instance.canvas = love.graphics.newCanvas(width, height)
-  instance.width  = width
-  instance.height = height
-  instance.ratio  = width / height -- should be around 1.7 to 2.1, typically 16/9 = 1.77
-  instance.stroke = stroke or 30 / love.graphics.getDPIScale()
-  instance.currentStroke = 100 / love.graphics.getDPIScale()
+  instance.stroke = stroke or maxStroke
+  instance.currentStroke = progressiveVision and maxStroke or instance.stroke
+  instance.opacity = progressiveVision and .1 or (opacity or .9)
   return instance
 end
 
-function module:draw(scene, duration)
-  local canvas = self.canvas
-  local width  = self.width
-  local height = self.height
+function module:draw(scene, duration, canvas, stroke, opacity)
+  canvas  = canvas or self.canvas
+  local width  = canvas:getWidth()
+  local height = canvas:getHeight()
+  stroke  = stroke or self.currentStroke / height
+  opacity =  opacity or self.opacity
 
   local t = love.timer.getTime()
   local raysShot = 0
 
   love.graphics.push('all')
   love.graphics.reset()
-  love.graphics.setCanvas(self.canvas)
+  love.graphics.setCanvas(canvas)
   love.graphics.translate(width/2, height/2)
   love.graphics.scale(height/2, -height/2)
 
   while love.timer.getTime() - t < duration do
     local x = -width/height + 2 * width/height * random()
     local y = -1 + 2 * random()
+    local r,g,b,a
     local h, s, l, d = trace(scene, x, y, {}, 1)
-    if d > 0 then
+      local ss = stroke
       love.graphics.push()
       love.graphics.translate(x, y)
       love.graphics.rotate(.1 + random())
-      local ss = self.currentStroke / height
-      if false and #love.touch.getTouches() == 2 then
-        -- magic (using distance from edge for stroke size)
-        local ss = min(.12, .0 + .38 * abs(d))
+      if traceDistance then -- trace distance from edge for stroke size
+        ss = max(stroke, min(maxStroke, .0 + .39 * abs(d)))
       end
       local noise = .02 * (-.5 + random())
-      local r,g,b,a = lume.hsl(h, s, l + noise, .9)
+      --l = l * d / abs(d)  -- backify if d < 0 by setting negative lightness
+      if d < 0 then
+        l = .5 + .2 * math.random()
+        s = s * .2
+      end --noise background
+      r,g,b,a = lume.hsl(h, s, l + noise, opacity)
+      --a = d > 0 and d * 100 or 0
       love.graphics.setColor(r,g,b,a)
-      love.graphics.ellipse('fill', 0, 0, ss, ss/3, 6)
+      love.graphics.ellipse('fill', 0, 0, ss, ss/2, 17)
       love.graphics.pop()
-    end
+
     raysShot = raysShot + 1
   end
-  self.currentStroke = max(self.stroke, self.currentStroke - self.currentStroke^2 * raysShot / 2000000)
+  if progressiveVision then
+    self.opacity = min(.9, self.opacity + 10 * raysShot / strokeDecay)
+    self.currentStroke = max(self.stroke, self.currentStroke - self.currentStroke^2 * raysShot / strokeDecay)
+  else
+    self.currentStroke = self.stroke
+  end
   love.graphics.pop()
   return raysShot
 end
 
 function module:resetStroke()
-  self.currentStroke = 100 / love.graphics.getDPIScale()
+  if progressiveVision then
+    self.currentStroke = maxStroke
+    self.opacity = 0.3
+  end
 end
 
 local memos = {}
@@ -84,10 +103,12 @@ function memoLookup(node, precision, x, y, env, depth)
   local memo = memos[node]
   memo[xg] = memo[xg] or {}
   local hsld = memo[xg][yg]
-  if not hsld or random() > .85 then
+  if not hsld or random() > .95 then
     memo[xg] = memo[xg] or {}
     h,s,l,d = trace(node[3], xg, yg, env, depth + 1)
-    memo[xg][yg] = {h,s,l,d}
+    if d > 0 then
+      memo[xg][yg] = {h,s,l,d}
+    end
     memo.count = memo.count + 1
   else
     h,s,l,d = unpack(hsld)
@@ -96,6 +117,8 @@ function memoLookup(node, precision, x, y, env, depth)
 end
 
 function R(exp, env, default) -- resolve
+  return exp or default
+  --[[
   if type(exp) == 'number' then
     return exp
   elseif type(exp) == 'string' then
@@ -103,6 +126,7 @@ function R(exp, env, default) -- resolve
   elseif type(exp) == 'nil' then
     return default
   end
+  --]]
 end
 
 function trace(node, x, y, env, depth) -- returns ray color
@@ -116,24 +140,21 @@ function trace(node, x, y, env, depth) -- returns ray color
     return 0, 0, 1,  -(R(node[2], env, 0) + y) * R(node[3], env, 1)
 
   elseif node[1] == 'simplex' then
-    return 0, 1, 1, .2 * R(node[3], env, 1) * (R(node[2], env, 0) + noise.Simplex2D(x, y))
+    return 0, 0, 1, .2 * R(node[3], env, 1) * (R(node[2], env, 0) + noise.Simplex2D(x, y))
 
   elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return trace(node[3], x, y, env, depth + 1)
-
-  elseif node[1] == 'camera' then
-    local t = getTransform(node)
-    x,y = t:transformPoint(x, y)
     local h,s,l,d = trace(node[3], x, y, env, depth + 1)
-    d = d * R(node[2][4], env, 1)
+    if traceDistance then
+      d = d * math.min(R(node[2][4], env, 1), R(node[2][5], env, 1))
+    end
     return h,s,l,d
 
   elseif node[1] == 'wrap' then
     local ph = -atan2(y, x)
     local r = sqrt(x^2 + y^2) - 1
-    return trace(node[2], ph, r, env, depth + 1)
+    return trace(node[2], ph / math.pi, r, env, depth + 1)
 
   elseif node[1] == 'unwrap' then
     local ph, r = x, y
@@ -146,6 +167,17 @@ function trace(node, x, y, env, depth) -- returns ray color
     d = -d
     return h,s,l,d
 
+  elseif node[1] == 'mirror' then
+    return trace(node[2], abs(x), y, env, depth + 1)
+
+  elseif node[1] == 'mod' then
+    local modX = node[3] or 1
+    local modY = node[4] or 1
+    x = ((x/2 + .5) % modX) * 2 - 1
+    y = ((y/2 + .5) % modY) * 2 - 1
+    --x = ((x + 1)/2 % 1) * abs(x)/x
+    return trace(node[2], x, y, env, depth + 1)
+
   elseif node[1] == 'replicate' then
     local h,s,l,d
     local t = getTransform(node[3])
@@ -155,6 +187,15 @@ function trace(node, x, y, env, depth) -- returns ray color
       x,y = t:transformPoint(x, y)
     end
     return h,s,l,d
+
+  elseif node[1] == 'smooth' then
+    local h, s, l, a, b, e, d
+    local r = node[2]
+    h,s,l, a = trace(node[3], x, y, env, depth + 1)
+    h,s,l, b = trace(node[4], x, y, env, depth + 1)
+    e = max(r - abs(a - b), 0)
+    d = max(a, b) + e^2 * 0.25 / r
+    return h, s, l, d
 
   elseif node[1] == 'combine' then
     local h,s,l,d
