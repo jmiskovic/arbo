@@ -164,9 +164,11 @@ function module:update(dt)
     cursor = self.selected
     target = math.floor(cursor + .5)
     self.selected = cursor + (target - cursor) * 5 * dt
+    local colSelected = self.columns[math.floor(self.selected + .5)]
     if colSelected then
       cursor = colSelected.selected
       target = math.floor(cursor + .5)
+      target = math.min(#colSelected.tree, math.max(1, target))
       colSelected.selected = cursor + (target - cursor) * 2 * dt
     end
   end
@@ -203,10 +205,12 @@ end
 function module:touchmoved(id, x, y, dx, dy, pressure)
   if #love.touch.getTouches() == 1 then
     if math.abs(dx) > 30 or math.abs(dy) > 30 then return end
-    self.selected = self.selected - 15 * dx / self.width
+    self.selected = self.selected - 10 * dx / self.width
     local colSelected = self.columns[math.floor(self.selected + .5)]
     if colSelected then
       colSelected.selected = colSelected.selected - 8 * dy / self.height
+    else -- undo change
+      self.selected = self.selected + 15 * dx / self.width
     end
   end
 end

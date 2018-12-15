@@ -155,7 +155,7 @@ function love.update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
   if #love.touch.getTouches() == 0 then
-    love.timer.sleep(.04)
+    love.timer.sleep(.01)
   end
   love.timer.sleep(.01)
   for i, touchId in ipairs(love.touch.getTouches()) do
