@@ -39,6 +39,9 @@ function module.new(width, height, root)
       elseif parent[1] == 'edge' then
         parent[1] = 'simplex'
       end
+    end,
+    function (self, selected, parent)
+      return parent and (parent[1] == 'simplex' or parent[1] == 'edge')
     end)
 
   instance.icons.wrap = icon.new('wrap'    , 2, 0,
@@ -48,6 +51,9 @@ function module.new(width, height, root)
           'wrap',
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
   instance.icons.position = icon.new('position', 3, 0,
@@ -58,6 +64,9 @@ function module.new(width, height, root)
           {0,0,0,1,1},
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
   instance.icons.tint = icon.new('tint'    , 4, 0,
@@ -68,6 +77,9 @@ function module.new(width, height, root)
           {math.random(), .5, .5},
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
 
@@ -78,6 +90,9 @@ function module.new(width, height, root)
           'negate',
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
   instance.icons.mirror = icon.new('mirror' , 6, 0,
@@ -87,6 +102,9 @@ function module.new(width, height, root)
           'mirror',
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
   instance.icons.combine = icon.new('combine' , 2, -1,
@@ -96,6 +114,9 @@ function module.new(width, height, root)
           'combine',
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
   instance.icons.clip = icon.new('clip' , 3, -1,
@@ -105,9 +126,12 @@ function module.new(width, height, root)
           'clip',
           {unpack(parent)},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
-  instance.icons.smooth = icon.new('bone' , 4, -1,
+  instance.icons.smooth = icon.new('smooth' , 4, -1,
     function(self, selected, parent)
       replaceContent(parent,
         {
@@ -116,6 +140,9 @@ function module.new(width, height, root)
           {unpack(parent)},
           {'edge'},
         })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
     end)
 
   instance.icons.add = icon.new('add' , 0, -1,
@@ -130,6 +157,11 @@ function module.new(width, height, root)
         end
         --parent[#parent + 1] =
       end
+    end,
+    function (self, selected, parent)
+      return parent and
+        (parent[1] == 'combine' or parent[1] == 'clip') and
+        selected
     end)
 
   instance.icons.del = icon.new('del' , 0, -2,
@@ -146,6 +178,11 @@ function module.new(width, height, root)
           end
         end
       end
+    end,
+    function (self, selected, parent)
+      return parent and
+        (parent[1] == 'combine' or parent[1] == 'clip') and
+        selected and type(selected) == 'table'
     end)
 
   instance.icons.snip = icon.new('snip'    , 0, -3,
@@ -161,6 +198,10 @@ function module.new(width, height, root)
           parent[i] = nil
         end
       end
+    end,
+    function (self, selected, parent)
+      return parent and selected and
+        type(selected) == 'table' and type(selected[1]) == 'string'
     end)
 
   return instance
@@ -187,9 +228,15 @@ function module:draw()
 end
 
 function module:drawIcons()
+  local selected, parent = editor:getSelected()
   for _,icon in pairs(self.icons) do
-    icon:draw()
+    -- TODO: really redundant to preform icon:check() on each frame
+    -- should do it on selection change
+    if not icon.check or icon:check(selected, parent) then
+      icon:draw()
+    end
   end
+  love.graphics.reset()
 end
 
 function module:update(dt)
@@ -197,11 +244,13 @@ function module:update(dt)
 end
 
 function module:mousereleased(x, y, button, istouch, presses)
+  local selected, parent = editor:getSelected()
   for name,icon in pairs(self.icons) do
     if icon:contains(x,y) and icon.tapped then
-      local selected, parent = editor:getSelected()
-      icon:tapped(selected, parent)
-      self.renderer:resetStroke()
+      if not icon.check or icon:check(selected, parent) then
+        icon:tapped(selected, parent)
+        self.renderer:resetStroke()
+      end
       --icon.holdoff = icon.tapped
       --icon.tapped = nil
       --love.timer.sleep(.2)

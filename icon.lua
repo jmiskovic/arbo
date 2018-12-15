@@ -1,6 +1,6 @@
 local module = {}
 module.__index = module
-local fitVertical = 10
+local fitVertical = 8
 
 --[[
 function love.graphics.getHeight()
@@ -28,7 +28,7 @@ local font = love.graphics.newFont('fonts/fa-solid-900.ttf', size/2)
 --print('love.graphics.getWidth()', love.graphics.getWidth())
 --print('love.graphics.getDPIScale()', dpiScale)
 
-function module.new(name, col, row, tapped)
+function module.new(name, col, row, tapped, check)
   assert(names[name], 'unknown icon name')
   instance = setmetatable({
       name = name,
@@ -39,6 +39,7 @@ function module.new(name, col, row, tapped)
       fontW = font:getWidth(names[name]),
       fontH = font:getHeight(),
       tapped = tapped,
+      check = check,
     }, module)
   if col >= 0 then
     instance.x = .5 + (col) % (fitVertical * screenRatio)
@@ -962,6 +963,7 @@ names.combine  = names['layer-group']
 names.sum      = names['plus-circle']
 names.tint     = names['palette']  -- note: overriding existing icon
 names.memo     = names['chess-board']
+names.smooth   = names['bone']
 names.mirror   = names['book-open']
 names.interact = names['hand-point-up']
 names.snip     = names['chevron-circle-left']

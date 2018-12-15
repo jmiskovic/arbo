@@ -69,9 +69,8 @@ end
 
 function module:getSelected()
   local column = self.columns[math.floor(self.selected + .5)]
-  local parent = column.tree
-  local selected = column.tree[math.floor(column.selected + .5)]
-  print('selected', selected, 'parent', parent, column.selected, #column.tree)
+  local parent = column and column.tree or nil
+  local selected = parent and column.tree[math.floor(column.selected + .5)]
   return selected, parent
 end
 
@@ -119,16 +118,9 @@ function module:drawColumn(column, isSelected)
         love.graphics.setColor(lume.hsl(0.02, 0.32, 0.82))
         love.graphics.rectangle('fill', 0, 0, self.rowHeight/5, self.rowHeight)
       end
-      --love.graphics.setLineWidth(10)
-      --love.graphics.setColor(1, 1, 1, .2)
-      --love.graphics.rectangle('line', 0, 0, self.colWidth, self.colWidth)
       love.graphics.pop()
     elseif type(item) == 'table' then
-      s = string.format('*%d', #item)
-    --elseif column.tree[1] == 'tint' and i == 2 then
-    --  local color = {item[1] or 0, item[2] or 0, item[3] or 0, item[4] or 1}
-    --  love.graphics.setColor(lume.hsl(unpack(color)))
-    --  love.graphics.rectangle('fill', 0, -self.rowHeight / 4, self.rowHeight / 2, self.rowHeight / 2)
+      s = string.format('%d{', #item)
     elseif type(item) == 'number' then
       s = string.format('%+1.4f', item)
     elseif type(item) == nil then
@@ -195,7 +187,7 @@ function module:update(dt)
         self.columns[i+1] = newColumn({})
         self.columns[i+1].selected = 2
       end
-      self.columns[i+1].tree = {' +', '', ' -'}
+      self.columns[i+1].tree = {}
       self.columns[i+2] = nil
       break -- no more columns after this one
     else
@@ -204,17 +196,6 @@ function module:update(dt)
     end
     if i ~= math.floor(self.selected + .5) then
       column.selected = rowSelected
-    end
-  end
-  -- propagate set value to column on the left
-  local colSelected = self.columns[math.floor(self.selected + .5)]
-  local leftOfSelected = self.columns[math.floor(self.selected - .5)]
-  if leftOfSelected and leftOfSelected.tree then
-    local row = math.floor(leftOfSelected.selected + .5)
-    if type(leftOfSelected.tree[row]) == 'number' and math.abs(2 - colSelected.selected) > .05 then
-      local delta = dt * 2^(math.abs(2 - colSelected.selected)) / 500 * (2 - colSelected.selected) / math.abs(2 - colSelected.selected)
-      leftOfSelected.tree[row] = leftOfSelected.tree[row] + delta
-      --print(delta, leftOfSelected.tree[row])
     end
   end
 end
@@ -232,6 +213,7 @@ end
 
 function module:pinchmoved(dx, dy, drot, dscl)
   local colSelected = self.columns[math.floor(self.selected + .5)]
+  local rowSelected = colSelected and colSelected.tree[math.floor(colSelected.selected + .5)]
   if colSelected then
     if colSelected.tree[1] == 'position' then
       colSelected.tree[2][1] = (colSelected.tree[2][1] or 0) + dx
@@ -259,6 +241,8 @@ function module:pinchmoved(dx, dy, drot, dscl)
       color[1] = color[1] % 1
       color[2] = math.min(1, math.max(color[2]))
       color[3] = math.min(1, math.max(color[3]))
+    elseif type(rowSelected) == 'number' then
+      colSelected.tree[math.floor(colSelected.selected + .5)] = rowSelected + 2 * drot
     elseif self.scene[1] == 'position' then
       self.scene[2][1] = (self.scene[2][1] or 0) + dx
       self.scene[2][2] = (self.scene[2][2] or 0) + dy

@@ -1,7 +1,7 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = {position, {0,0,0,1}, {edge}}
+local scene = {position, {0,0,0,1}, {'edge'}}
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
