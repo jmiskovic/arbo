@@ -81,7 +81,7 @@ function module:preview(node, index)
   previewScene[3] = node
   self.renderer:draw(
     previewScene,
-    .001,
+    .005,
     canvas)
   return canvas
 end
@@ -247,6 +247,9 @@ function module:pinchmoved(dx, dy, drot, dscl)
       color[3] = math.min(1, math.max(color[3]))
     elseif type(rowSelected) == 'number' then
       colSelected.tree[math.floor(colSelected.selected + .5)] = rowSelected + 2 * drot
+      if colSelected.tree[1] == 'memo' then
+        memoReset(colSelected.tree)
+      end
     elseif self.scene[1] == 'position' then
       self.scene[2][1] = (self.scene[2][1] or 0) + dx
       self.scene[2][2] = (self.scene[2][2] or 0) + dy

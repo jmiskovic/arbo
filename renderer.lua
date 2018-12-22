@@ -1,7 +1,7 @@
 local module = {}
 
 local traceDistance     = not true
-local progressiveVision = true
+local progressiveVision = not true
 
 local maxStroke = 150 / love.graphics.getDPIScale()
 local strokeDecay = traceDistance and 500000 or 1000000
@@ -106,14 +106,18 @@ function memoLookup(node, precision, x, y, env, depth)
   if not hsld or random() > .95 then
     memo[xg] = memo[xg] or {}
     h,s,l,d = trace(node[3], xg, yg, env, depth + 1)
-    if d > 0 then
       memo[xg][yg] = {h,s,l,d}
+    if d > 0 then
     end
     memo.count = memo.count + 1
   else
     h,s,l,d = unpack(hsld)
   end
   return h, s, l, d
+end
+
+function memoReset(node)
+  memos[node] = nil
 end
 
 function R(exp, env, default) -- resolve
@@ -136,6 +140,9 @@ function trace(node, x, y, env, depth) -- returns ray color
     error('node has no type?!', node)
     return .9, 1, .5, 1 -- color errors with magenta color
 
+  elseif node[1] == 'disable' then
+    return 0, 0, 1, -1
+
   elseif node[1] == 'edge' then
     return 0, 0, 1,  -(R(node[2], env, 0) + y) * R(node[3], env, 1)
 
@@ -154,7 +161,7 @@ function trace(node, x, y, env, depth) -- returns ray color
   elseif node[1] == 'wrap' then
     local ph = -atan2(y, x)
     local r = sqrt(x^2 + y^2) - 1
-    return trace(node[2], ph / math.pi, r, env, depth + 1)
+    return trace(node[2], ph / pi, r, env, depth + 1)
 
   elseif node[1] == 'unwrap' then
     local ph, r = x, y

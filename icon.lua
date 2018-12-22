@@ -967,6 +967,7 @@ names.smooth   = names['bone']
 names.mirror   = names['book-open']
 names.interact = names['hand-point-up']
 names.snip     = names['chevron-circle-left']
+names.disable  = names['eye-slash']
 
 names.swap     = names['sync-alt']
 names.add      = names['plus-square']
@@ -974,4 +975,5 @@ names.del      = names['minus-square']
 names.store    = names['download'] -- note: overriding existing icon
 names.load     = names['upload']
 names.next     = names['angle-double-right']
+
 return module

@@ -16,7 +16,7 @@ function replaceContent(table, newContent)
   end
 end
 
-function module.new(width, height, root)
+function module.new(width, height, root, renderer)
   local instance = setmetatable(
     {
       width = width,
@@ -26,7 +26,7 @@ function module.new(width, height, root)
       parents = {},
       root = root,
     }, {__index=module})
-  instance.renderer = require('renderer').new(width, height, 20, .6)
+  instance.renderer = renderer or require('renderer').new(width, height, 20, .6)
   instance.icons = {}
   instance.icons.exit =  icon.new('exit',   -1, -1, function() love.event.quit() end)
   instance.icons.load =  icon.new('load',   -1, -3, function() love.keypressed('f5') end)
@@ -74,7 +74,7 @@ function module.new(width, height, root)
       replaceContent(parent,
         {
           'tint',
-          {math.random(), .5, .5},
+          {math.random(), .5, .5, .99},
           {unpack(parent)},
         })
     end,
@@ -100,6 +100,19 @@ function module.new(width, height, root)
       replaceContent(parent,
         {
           'mirror',
+          {unpack(parent)},
+        })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
+    end)
+
+  instance.icons.memo = icon.new('memo' , 7, 0,
+    function(self, selected, parent)
+      replaceContent(parent,
+        {
+          'memo',
+          0.05,
           {unpack(parent)},
         })
     end,
@@ -204,6 +217,71 @@ function module.new(width, height, root)
         type(selected) == 'table' and type(selected[1]) == 'string'
     end)
 
+  instance.icons.disable = icon.new('disable', 0, -4,
+    function(self, selected, parent)
+      replaceContent(selected,
+        {
+          'disable',
+          {unpack(selected)},
+        })
+
+    end,
+    function (self, selected, parent)
+      return type(selected) == 'table' and type(selected[1]) == 'string'
+    end)
+
+  -- shapes
+  instance.icons.circle = icon.new('circle' , -1, 0,
+    function(self, selected, parent)
+      replaceContent(selected,
+        {
+          'position',
+          {0,0,0,.5,.5},
+          {
+            'tint',
+            {math.random(), .5, .5, .99},
+            {'wrap', {'edge'}},
+          }
+        })
+    end,
+    function (self, selected, parent)
+      return type(selected) == 'table' and type(selected[1]) == 'string'
+    end)
+
+  instance.icons.square = icon.new('square' , -1, 1,
+    function(self, selected, parent)
+      replaceContent(selected,
+        {
+          'position',
+          {0,0,0,.5,.5},
+          {
+            'tint',
+            {math.random(), .5, .5, .99},
+            require('scenes/shapes').makePolygon(4)
+          }
+        })
+    end,
+    function (self, selected, parent)
+      return type(selected) == 'table' and type(selected[1]) == 'string'
+    end)
+
+  instance.icons.triangle = icon.new('play' , -1, 2,
+    function(self, selected, parent)
+      replaceContent(selected,
+        {
+          'position',
+          {0,0,0,.5,.5},
+          {
+            'tint',
+            {math.random(), .5, .5, .99},
+            require('scenes/shapes').makePolygon(3),
+          }
+        })
+    end,
+    function (self, selected, parent)
+      return type(selected) == 'table' and type(selected[1]) == 'string'
+    end)
+
   return instance
 end
 
@@ -219,8 +297,12 @@ function module:fetch(indices)
   return fetch(self.root, indices)
 end
 
+local frames = 1000
+local renderTime = .02
+
 function module:draw()
-  rayCount = self.renderer:draw(self.root, .01)
+  local rayCount = self.renderer:draw(self.root, renderTime)
+  frames = .96 * frames + .04 * rayCount
   love.graphics.setColor(1, 1, 1)
   --love.graphics.setClip)
   love.graphics.draw(self.renderer.canvas)
@@ -235,6 +317,7 @@ function module:drawIcons()
     if not icon.check or icon:check(selected, parent) then
       icon:draw()
     end
+    love.graphics.print(string.format('%.1fk | %d fps | %d stroke | %.1f opacity ', frames / renderTime / 1000, love.timer.getFPS(), self.renderer.stroke, self.renderer.opacity))
   end
   love.graphics.reset()
 end

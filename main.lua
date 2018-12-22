@@ -1,13 +1,13 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = {position, {0,0,0,1}, {'edge'}}
+local scene = {position, {0,0,0,1,1}, {edge}}
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
 local screenRatio = sw / sh -- ranges from 1.7 to 2.1, typically 16/9 = 1.77
-local renderer = require('renderer').new(sw, sh, 25)
-local treeverse = require('treeverse').new(sw, sh, scene)
+local renderer = require('renderer').new(sw, sh, 15)
+local treeverse = require('treeverse').new(sw, sh, scene, renderer)
 editor = require('editor').new(sw, sh, scene)
 
 local datetime = os.date('*t')
@@ -60,6 +60,7 @@ end
 
 local function interact(node, x, y)
   if node[1] == 'interact' and node[4] then
+    print('distance', math.sqrt(x^2 + y^2))
     if x^2 + y^2 < 1 then
       print(string.format('interacted r=%.2f, x=%.2f, y=%.2f', math.sqrt(x*x+y*y), x, y))
       if type(node[4]) == 'function' then
@@ -104,9 +105,9 @@ local function interact(node, x, y)
     x,y = t:transformPoint(x, y)
     return interact(node[3], x, y)
   elseif node[1] == 'wrap' then
+    local ph = -math.atan2(y, x)
     local r = (x^2 + y^2) - 1
-    local a = -math.atan2(y, x) / math.pi
-    return interact(node[2], a, r)
+    return interact(node[2], ph / math.pi, r)
   elseif node[1] == 'tint' then
     return interact(node[3], x, y)
   elseif node[1] == 'negate' then -- TODO: what to do here?
@@ -155,7 +156,7 @@ function love.update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
   if #love.touch.getTouches() == 0 then
-    love.timer.sleep(.01)
+    love.timer.sleep(.02)
   end
   love.timer.sleep(.01)
   for i, touchId in ipairs(love.touch.getTouches()) do
@@ -188,7 +189,6 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     editor:draw()
     treeverse:drawIcons()
-    love.graphics.print(string.format('%.1fk | %d fps | %d stroke | %.1f opacity ', frames / renderTime / 1000, love.timer.getFPS(), treeverse.renderer.stroke, treeverse.renderer.opacity))
   end
 end
 
@@ -206,9 +206,11 @@ function love.keypressed(key)
     print('loaded', loaded)
     if loaded then
       scene = loaded
-      editor = require('editor').new(sw, sh, scene)
-      treeverse = require('treeverse').new(sw, sh, scene)
+    else
+      scene = {position, {0,0,0,1}, {'edge'}}
     end
+    editor = require('editor').new(sw, sh, scene)
+    treeverse = require('treeverse').new(sw, sh, scene, renderer)
   end
 end
 
@@ -257,7 +259,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
       math.sqrt((tCurr[1][1] - tCurr[2][1])^2 + (tCurr[1][2] - tCurr[2][2])^2) -
       math.sqrt((tInit[1][1] - tInit[2][1])^2 + (tInit[1][2] - tInit[2][2])^2))
     editor:pinchmoved(dx, dy, rot, scl)
-    renderer:resetStroke()
+    treeverse.renderer:resetStroke()
   elseif #love.touch.getTouches() == 3 then
     treeverse.renderer.stroke = math.max(2, treeverse.renderer.stroke + 10 * dy / sh)
     treeverse.renderer.opacity = math.max(.1, treeverse.renderer.opacity + .5 * dx / sh)
@@ -265,8 +267,14 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
-  if #love.touch.getTouches() == 0 and guiVisible then
-    treeverse:mousereleased(x, y, button, istouch, presses)
+  if #love.touch.getTouches() == 0 then
+    if guiVisible then
+      treeverse:mousereleased(x, y, button, istouch, presses)
+    else
+      local t = transform:setTransformation(sw/2, sh/2, 0, sh/2, -sh/2):inverse()
+      x, y = t:transformPoint(x, y)
+      interact(scene, x, y)
+    end
   end
 end
 
