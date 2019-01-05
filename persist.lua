@@ -29,7 +29,7 @@ function persist.load(filename)
     print(errormsg)
     return content
   end
-  local ok, data = serpent.load(content, {safe=true})
+  local ok, data = serpent.load(content, {safe=false})
   print('loaded from', filename)
   return data
 end

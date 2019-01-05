@@ -74,14 +74,14 @@ function module:getSelected()
   return selected, parent
 end
 
-function module:preview(node, index)
+function module:preview(node, index, count)
   self.canvases[index] = self.canvases[index]
     or love.graphics.newCanvas(self.rowHeight * screenRatio, self.rowHeight)
   canvas = self.canvases[index]
   previewScene[3] = node
   self.renderer:draw(
     previewScene,
-    .005,
+    .01 / count,
     canvas)
   return canvas
 end
@@ -110,7 +110,7 @@ function module:drawColumn(column, isSelected)
       love.graphics.push('all')
       love.graphics.setLineWidth(self.rowHeight / 10)
       love.graphics.translate(0, 1.5 * self.rowHeight)
-      local canvas = self:preview(item, i) -- here's the renderer
+      local canvas = self:preview(item, i, #column.tree - 1) -- here's the renderer
       love.graphics.translate(0, -2 * self.rowHeight)
       love.graphics.setColor(1,1,1)
       love.graphics.draw(canvas)
@@ -246,7 +246,7 @@ function module:pinchmoved(dx, dy, drot, dscl)
       color[2] = math.min(1, math.max(color[2]))
       color[3] = math.min(1, math.max(color[3]))
     elseif type(rowSelected) == 'number' then
-      colSelected.tree[math.floor(colSelected.selected + .5)] = rowSelected + 2 * drot
+      colSelected.tree[math.floor(colSelected.selected + .5)] = rowSelected - 2 * drot
       if colSelected.tree[1] == 'memo' then
         memoReset(colSelected.tree)
       end

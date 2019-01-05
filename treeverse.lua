@@ -25,6 +25,7 @@ function module.new(width, height, root, renderer)
       columns = {},
       parents = {},
       root = root,
+      waitingSelection = false,
     }, {__index=module})
   instance.renderer = renderer or require('renderer').new(width, height, 20, .6)
   instance.icons = {}
@@ -372,8 +373,71 @@ function module:update(dt)
   --local selected, parent = editor:getSelected()
 end
 
+function module:selectPressedLeaf(x, y)
+  local basefun = self.renderer.trace -- wrapped in closure
+  local foundNode = nil
+  local foundDepth = 0
+  local function traceLeaf(node, x, y, env, depth, tracefun)
+    if node[1] == 'tint' then
+      local h,s,l,d = basefun(node, x, y, env, depth, traceLeaf)
+      if d > 0 then
+        foundNode = node
+        foundDepth = depth
+      end
+      return h,s,l,d
+    else
+      return basefun(node, x, y, env, depth, traceLeaf)
+    end
+  end
+
+  traceLeaf(self.root, x, y, {}, 1, self.renderer.trace, self.renderer.trace)
+  if foundNode then
+    print(foundNode, #foundNode, foundNode[2][1], foundNode[2][3], foundNode[2][3])
+    --foundNode[2][1] = (foundNode[2][1] + .5 ) % 1
+    --foundNode[2][3] = (foundNode[2][3] + .5 ) % 1
+    -- editor = editor.new(editor.width, editor.height, foundNode)
+    -- editor.scene = foundNode
+    editor.selected = foundDepth
+    local child  = foundNode
+    local parent = nil
+    for i = foundDepth - 1, -1, -1 do
+      if not editor.parents[child] then
+        print('not found', child)
+        break
+      end
+      parent = editor.parents[child][1]
+      editor.columns[i] = editor.columns[i] or newColumn(parent)
+      editor.columns[i].tree = parent
+      for j, v in ipairs(parent) do
+        if v == child then
+          editor.columns[i].selected = j
+        print(parent, child, foundDepth, i, j, parent[1], child[1])
+        end
+      end
+      child = parent -- ain't that just a way
+    end
+    --updateParents(foundNode, editor.parents, 1)
+  end
+  -- print(#ret, ret[1], ret[2], ret[3], ret[4], ret[1] * 255, ret[2] * 255, ret[3] * 255)
+    --self.renderer
+end
+
 function module:mousereleased(x, y, button, istouch, presses)
   local selected, parent = editor:getSelected()
+  if self.waitingSelection then
+    self.waitingSelection = false
+    love.graphics.push()
+    love.graphics.reset()
+    love.graphics.translate(love.graphics.getWidth()/2, love.graphics.getHeight()/2)
+    love.graphics.scale(love.graphics.getHeight()/2, -love.graphics.getHeight()/2)
+    print(x,y)
+    x, y = love.graphics.inverseTransformPoint(x, y)
+    print(x,y)
+    love.graphics.pop()
+    self:selectPressedLeaf(x, y)
+    return
+  end
+
   for name,icon in pairs(self.icons) do
     if icon:contains(x,y) and icon.tapped then
       if not icon.check or icon:check(selected, parent) then

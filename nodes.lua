@@ -6,18 +6,22 @@ simplex   = 'simplex'
 position  = 'position'
 -- {wrap, arbo}
 wrap      = 'wrap'
--- {unwrap, arbo}
+-- {unwrap, yexp, arbo}
 unwrap      = 'unwrap'
 -- {negate, arbo}
 negate    = 'negate'
 -- {clip, arbo1, arbo2, ...}
 clip = 'clip'
 -- {combine, arbo1, arbo2, ...}
-combine      = 'combine'
+combine   = 'combine'
 -- {sum, arbo1, arbo2, ...}
 sum       = 'sum'
+-- {smooth, softness, shape1, shape2}
+smooth    = 'smooth'
 -- {tint, {hue, saturation, lightness}, arbo}
 tint      = 'tint'
+-- {noise, {hue, saturation, lightness}, arbo}
+noise     = 'noise'
 -- {memo, arbo}
 memo      = 'memo'
 -- {set, table_index, new_value}

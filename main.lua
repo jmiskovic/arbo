@@ -1,7 +1,13 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
-local scene = {position, {0,0,0,1,1}, {edge}}
+--local scene = {position, {0,0,0,1,1}, {edge, 0, 1}}
+--local scene = require('bwm/bluecircle')
+--local scene = require('scenes/edg32')
+local scene = require('scenes/falls')
+
+local savefile = 'scene.lua'
+
 local TGF = require('TGF')
 
 local sw, sh = love.graphics.getDimensions()
@@ -12,11 +18,12 @@ editor = require('editor').new(sw, sh, scene)
 
 local datetime = os.date('*t')
 local time = datetime.hour * 3600 + datetime.min * 60 + datetime.sec
-local renderTime = .04
+local renderTime = .01
 
 local pinchInitial = {}
 local tInit = {} -- initial touch positions (stored when number of touches changes)
 
+tickPeriod = .05
 guiVisible = true
 
 transform = love.math.newTransform()
@@ -107,7 +114,7 @@ local function interact(node, x, y)
   elseif node[1] == 'wrap' then
     local ph = -math.atan2(y, x)
     local r = (x^2 + y^2) - 1
-    return interact(node[2], ph / math.pi, r)
+    return interact(node[3], ph / math.pi, r^node[2])
   elseif node[1] == 'tint' then
     return interact(node[3], x, y)
   elseif node[1] == 'negate' then -- TODO: what to do here?
@@ -146,7 +153,7 @@ end
 function love.update(dt)
   time = time + dt
   --run ticks across all nodes
-  if time % .5 < dt then
+  if time % tickPeriod < dt then
     for node, tick in pairs(nodeTicks) do
       tick(node, time)
       --treeverse.renderer:resetStroke()
@@ -156,9 +163,9 @@ function love.update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
   if #love.touch.getTouches() == 0 then
-    love.timer.sleep(.02)
+    --love.timer.sleep(.02)
   end
-  love.timer.sleep(.01)
+  love.timer.sleep(.02)
   for i, touchId in ipairs(love.touch.getTouches()) do
     tInit[i] = {love.touch.getPosition(touchId)}
     tInit[i+1] = nil
@@ -185,7 +192,7 @@ function love.draw()
       love.graphics.print(string.format('%.1fk | %d fps | %d stroke | %.1f opacity ', frames / renderTime / 1000, love.timer.getFPS(), treeverse.renderer.stroke, renderer.opacity))
     end
   end
-  if guiVisible then
+  if guiVisible and not treeverse.waitingSelection then
     love.graphics.setColor(1, 1, 1, 1)
     editor:draw()
     treeverse:drawIcons()
@@ -200,9 +207,9 @@ function love.keypressed(key)
   elseif key == 'f11' then
     love.window.setFullscreen(not love.window.getFullscreen())
   elseif key == 'f2' then
-    persist.store(scene, 'scene.scn')
+    persist.store(scene, savefile)
   elseif key == 'f5' then
-    loaded = persist.load('scene.scn')
+    loaded = persist.load(savefile)
     print('loaded', loaded)
     if loaded then
       scene = loaded
