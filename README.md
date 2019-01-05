@@ -3,7 +3,7 @@
 
 Arbo is real-time interactive 2D graphics engine based on SDF and ray tracing. Scene is composed from interactive reusable parts, defined as mathematical transformations over just two primitives.
 
-Still in early experimental phase.
+Still in early experimental phase. Development is done on Linux & Android using the LÖVE framework for Lua.
 
 ## Why?
 
@@ -53,7 +53,7 @@ The sub-scene follows the same nested structure, until primitives are reached. T
 
 The **edge** and **simplex** represent two approaches to scene modelling. The **edge** is used when we  want to manually produce a well defined shape - a flower, sun, a building, an animal... 
 
-The **simplex** allows us to add random patterns for vague elements that would be too hard to compose exactly - clouds, stars, animal stripes, surface irregularities, continent shapes...
+The **simplex** allows us to add random patterns for vague elements that would be too hard to compose exactly - clouds, bush, stars, animal stripes, surface irregularities...
 
 Both **edge** and **simplex** produce a shape - they can be rendered on screen, or manipulated by shape transformations that also a produce shape.
 
@@ -65,20 +65,27 @@ Current transformations include:
 ```
 * **wrap** transform converts to polar coordinate system, producing oval shapes
 ```
-{wrap, shape}
+{wrap, yexp, shape}
 ```
 * **negate** creates inverse or a negative
 ```
 {negate, shape}
 ```
-* **join** composes a complex shape out of list of shapes
+* **mirror** produces another mirrored shape respective to y-axis
 ```
-{join, shape1, shape2, ...}
+{mirror, shape}
+```
+* **combine** composes a complex shape out of list of shapes
+```
+{combine, shape1, shape2, ...}
 ```
 * **cut** uses list of shapes to create a new shape that exists only in areas where *all* of input shapes overlap
 ```
 {cut, shape1, shape2, ...}
 ```
+* **smooth** softly melds one shape into another, or substracts them if softness is negative
+{smooth, softness, shape1, shape2}
+
 * **tint** sets the color of drawn shape, using HSL color model
 ```
 {tint, {hue, saturation, lightness}, shape}
@@ -103,27 +110,62 @@ As scene grows in complexity, it takes more and more time to calculate value for
 
 ## Interactivity
 
-This part is still not defined how it's supposed to work. Basically the scene is defined as tree structure, which is just like AST (abstract syntax tree) and lisp's S-expressions. The scene definition is both data and code. It should be possible for scene to contain instructions to modify itself.
+This part is still under construction.
+
+The scene is defined as tree structure, which is just like AST (abstract syntax tree) and lisp's S-expressions. The scene definition is both data and code. It should be possible for scene to contain instructions to modify itself.
 
 User should specify how parts of the scene should look like in different contexts. Then depending on current context the engine could interpolate the values.
 
-Current sample scenes execute the Lua code that's used to simulate real-time changes.
+Current sample scenes execute the Lua code that's used to simulate real-time changes. There's also basic support for passing environment table down the tree, that can be referenced in geometry instead of using constants.
 
 ## Editor
 
-Under construction. Current iteration can navigate the scene tree and edit numerical values on the fly. Deleting/adding elements is not supported at the moment. The sample scenes were instead constructed by writing Lua code.
+Under construction, to be completely re-imagined. Current iteration already has many features to navigate the scene tree and edit numerical values on the fly. 
 
-## How to start up?
+Missing features are changing between scenes, reusing same node in different parts of trees (and navigating between contexts of reused nodes), constructing reflective geometry and editing interactive nodes.
 
-Grab interpreter from [LÖVE website](https://love2d.org/) and use it to execute main.lua
+Use one finger dragging to navigate through tree. 
 
-Development is done on Linux & Android. Currently requires touchscreen to access features.
+When on `tint` node use two-finger swiping to modify color:
+
+* swipe left/right to change hue
+
+* swipe up-left/down-right to change saturation
+
+* swipe up-right/down-left to change lightness
+
+When on `position` node, use two finger pinch gesture to move/rotate/scale content.
+
+When constant number is selected, use rotating gesture with two fingers to increase/decrease the value.
+
+While navigating the scene tree, icons will show up if they are relevant in current context. Icons don't have any tooltips and not all are intuitive. Work in progress...
+
+
+
+## How to start?
+
+Grab interpreter from [LÖVE website](https://love2d.org/) and use it to execute `main.lua`. Currently requires screen with multi-touch to access most features (doesn't work with mouse).
+
+As for Android, it's still too early to start packaging & distributing the APK. To run it on phone/tablet follow these instructions:
+
+* grab v0.11 of interpreter for Android from [here](https://bitbucket.org/MartinFelis/love-android-sdl2/downloads/)
+
+* place content of this repository into `/sdcard/lovegame` so that `main.lua` ends up on `/sdcard/lovegame/main.lua` path
+* run "LÖVE for Android" interpreter
+
+For development, the deploying can be automated with `adb push` and executing can be done using command:
+
+`adb shell am start -S -n "org.love2d.android/.GameActivity" -d "file:///sdcard/lovegame/main.lua"`
 
 ## Showcase
 
 Tree defined as recursive geometry - a tree is composed of a single branch and few smaller trees on top.
 
 ![tree](./doc/tree.gif)
+
+Same tree in more complex night scene with reflected geometry and clipping.
+
+![earth](./doc/night_tree.png)
 
 Sunset scene that dynamically changes location and color of shapes.
 
