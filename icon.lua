@@ -952,6 +952,7 @@ names = {
 ['yin-yang'] = '', --f6ad
 }
 names.exit     = names['door-open']
+names.select   = names['hand-pointer']
 names.tree     = names['project-diagram']
 names.edge     = names['window-maximize']
 names.simplex  = names['cloud']
@@ -968,6 +969,7 @@ names.mirror   = names['book-open']
 names.interact = names['hand-point-up']
 names.snip     = names['chevron-circle-left']
 names.disable  = names['eye-slash']
+names.noise    = names['spray-can']
 
 names.swap     = names['sync-alt']
 names.add      = names['plus-square']
@@ -975,5 +977,6 @@ names.del      = names['minus-square']
 names.store    = names['download'] -- note: overriding existing icon
 names.load     = names['upload']
 names.next     = names['angle-double-right']
+
 
 return module

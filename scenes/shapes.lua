@@ -5,6 +5,7 @@ local shapes = {}
 shapes.circle =
 {
   wrap,
+  1,
   {edge}
 }
 

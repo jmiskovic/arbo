@@ -12,7 +12,7 @@ local leverShape =
       {0,  .1, .016, .01, .01},
       {edge},
     },
-    {wrap,
+    {wrap, 1,
       {edge}
     },
     {position,
@@ -22,7 +22,7 @@ local leverShape =
   },
   {position,
     {1, 0, 0, .2, .2},
-    {wrap,
+    {wrap, 1,
       {edge}
     },
   }

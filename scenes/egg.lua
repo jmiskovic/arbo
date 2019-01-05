@@ -1,6 +1,6 @@
 nodes = require('nodes')
 
-local eggShape = {position, {0,0,0,.75,1}, {wrap, {edge}}}
+local eggShape = {position, {0,0,0,.75,1}, {wrap, 1, {edge}}}
 
 
 local egg =
@@ -61,7 +61,7 @@ local portal = {
           scene[3] = require('scenes/tree')
         end },
       {
-        wrap, {edge},
+        wrap, 1, {edge},
       }
     },
   },

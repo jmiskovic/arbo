@@ -19,7 +19,7 @@ local scene =
     position,
     {0, -earthZoom, 0.04, earthZoom},
     {
-      wrap,
+      wrap, 1,
       {
         combine,
         --clouds

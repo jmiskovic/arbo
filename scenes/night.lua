@@ -75,7 +75,7 @@ local city =
 {
   combine,
   -- palette
-  --{position, {.6, .8, 0, .6}, {clip, {wrap, {edge}}, require('edg32')}},
+  --{position, {.6, .8, 0, .6}, {clip, {wrap, 1, {edge}}, require('edg32')}},
   -- city
   {
     position,

@@ -16,7 +16,7 @@ local ray =
         {edge},
       },
       {negate,
-        {wrap,
+        {wrap, 1,
           {edge},
         },
       },
@@ -41,7 +41,7 @@ local scene =
 {position,
   {0, 0, 0,},
   rays,
-  {tint, {.8, .3, .5}, {wrap, {edge}}},
+  {tint, {.8, .3, .5}, {wrap, 1, {edge}}},
   --tick = function(scene, t)
   --  scene[2][3] = -t / 200
   --end

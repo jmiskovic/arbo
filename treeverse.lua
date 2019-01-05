@@ -21,7 +21,7 @@ function module.new(width, height, root, renderer)
     {
       width = width,
       height = height,
-      focus = {3, 3}, -- array of tree indices needed to reach focused node from root node
+      --focus = {3, 3}, -- array of tree indices needed to reach focused node from root node
       columns = {},
       parents = {},
       root = root,
@@ -49,6 +49,7 @@ function module.new(width, height, root, renderer)
       replaceContent(parent,
         {
           'wrap',
+          1,
           {unpack(parent)},
         })
     end,
@@ -120,6 +121,20 @@ function module.new(width, height, root, renderer)
       return parent and type(parent[1]) == 'string'
     end)
 
+
+  instance.icons.noise = icon.new('noise'    , 8, 0,
+    function(self, selected, parent)
+      replaceContent(parent,
+        {
+          'noise',
+          {0, 0, .3},
+          {unpack(parent)},
+        })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
+    end)
+
   instance.icons.combine = icon.new('combine' , 2, -1,
     function(self, selected, parent)
       replaceContent(parent,
@@ -151,7 +166,7 @@ function module.new(width, height, root, renderer)
           'smooth',
           .5,
           {unpack(parent)},
-          {'edge'},
+          {'edge', 0, 1},
         })
     end,
     function (self, selected, parent)
@@ -164,7 +179,7 @@ function module.new(width, height, root, renderer)
           (parent[1] == 'clip' or parent[1] == 'combine') then
         for i,v in ipairs(parent) do
           if v == selected then
-            table.insert(parent, i + 1, {'edge'})
+            table.insert(parent, i + 1, {'edge', 0, 1})
             break
           end
         end
@@ -240,7 +255,7 @@ function module.new(width, height, root, renderer)
           {
             'tint',
             {math.random(), .5, .5, .99},
-            {'wrap', {'edge'}},
+            {'wrap', 1, {'edge', 0, 1}},
           }
         })
     end,
@@ -282,6 +297,37 @@ function module.new(width, height, root, renderer)
       return type(selected) == 'table' and type(selected[1]) == 'string'
     end)
 
+
+  instance.grabbed = nil
+  instance.icons.yank = icon.new('copy' , 0, 1,
+    function(self, selected, parent)
+      instance.grabbed = selected
+    end,
+    function (self, selected, parent)
+      return type(selected) == 'table'
+    end)
+
+  instance.icons.splat = icon.new('paste' , 0, 2,
+    function(self, selected, parent)
+      for i,v in ipairs(parent) do
+        if v == selected then
+          parent[i] = instance.grabbed
+          break
+        end
+      end
+    end,
+    function (self, selected, parent)
+      return instance.grabbed and
+             type(selected) == type(instance.grabbed) and
+             type(selected) == 'table' and
+             type(instance.grabbed[1]) == type(selected[1])
+    end)
+
+  instance.icons.select = icon.new('select' , -2, -1,
+    function(self, selected, parent)
+      instance.waitingSelection = true
+    end)
+
   return instance
 end
 
@@ -298,7 +344,7 @@ function module:fetch(indices)
 end
 
 local frames = 1000
-local renderTime = .02
+local renderTime = .01
 
 function module:draw()
   local rayCount = self.renderer:draw(self.root, renderTime)

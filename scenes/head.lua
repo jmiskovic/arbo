@@ -15,17 +15,17 @@ local face =
     --'combine',
     'smooth', .81,
     {
-      position, {0,.2,0,.57}, {wrap, {edge}}
+      position, {0,.2,0,.57}, {wrap, 1, {edge}}
     },
     {
-      position, {0,-.4,0,.42,.48}, {wrap, {edge}}
+      position, {0,-.4,0,.42,.48}, {wrap, 1, {edge}}
     }
 --    clip,
 --    {
---      position, {0,.2,0,.6,1.3}, {wrap, {edge}}
+--      position, {0,.2,0,.6,1.3}, {wrap, 1, {edge}}
 --    },
 --    {
---      position, {0,-.16,0,.61,.75}, {wrap, {edge}}
+--      position, {0,-.16,0,.61,.75}, {wrap, 1, {edge}}
 --    }
   }
 
@@ -41,13 +41,13 @@ local eye =
     {
       tint, colors.black,
       {
-        position, {0,0,0,1}, {wrap, {edge}}
+        position, {0,0,0,1}, {wrap, 1, {edge}}
       },
     },
     {
       tint, colors.white,
       {
-        position, {0,0,0,1.5}, {wrap, {edge}}
+        position, {0,0,0,1.5}, {wrap, 1, {edge}}
       },
     },
   },
@@ -78,8 +78,8 @@ local neck =
 }
 
 local hair = {tint, colors.hair, {position, {.02, -.19, .0174, 1.258, 1.459}, face}}
-local frontHair = {clip, {position, {.03, .77, .0453, 1.02, .53}, {wrap, {edge}}}, hair}
-local frontHairShade = {tint, colors.hairShade, {clip, {position, {.0, .74, .0576, 1.02, .53}, {wrap, {edge}}}, face}}
+local frontHair = {clip, {position, {.03, .77, .0453, 1.02, .53}, {wrap, 1, {edge}}}, hair}
+local frontHairShade = {tint, colors.hairShade, {clip, {position, {.0, .74, .0576, 1.02, .53}, {wrap, 1, {edge}}}, face}}
 
 local head =
 {
@@ -92,7 +92,7 @@ local head =
   {--[[face]] tint, colors.skin, face },
   neck,
   hair,
-  --{--[[sky]]     tint, {0.55, 1.00, 0.43}, {wrap, {position, {0, -1, .5}, {edge}}}},
+  --{--[[sky]]     tint, {0.55, 1.00, 0.43}, {wrap, 1, {position, {0, -1, .5}, {edge}}}},
 }
 
 local scene =
@@ -139,7 +139,7 @@ local bunch =
 
 
   {position, {-.25, 0, 0, .2}, head},
-  {position, {-.25, 0, 0, .24}, {wrap, {edge}}},
+  {position, {-.25, 0, 0, .24}, {wrap, 1, {edge}}},
 --]]
   {--[[sky]]     tint, {0.55, 1.00, 0.43}, {position, {0, -100, .5}, {edge}}},
 }

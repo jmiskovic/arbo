@@ -54,7 +54,7 @@ local face =
     {facehue=.15},
     { tint,
       {'facehue', .5, .8},
-      { wrap,
+      { wrap, 1,
         { edge }
       },
     },
@@ -118,7 +118,7 @@ local cap =
   {0, 0, .1},
   { position,
     {0, 0, 0, .1, .1},
-    { wrap,
+    { wrap, 1,
       { edge}
     },
   },
@@ -132,7 +132,7 @@ local clock =
   minutes,
   hours,
   face,
-  {tint, {.72,.23,.2}, {wrap, {position, {0, -1, .5}, {edge}}}},
+  {tint, {.72,.23,.2}, {wrap, 1, {position, {0, -1, .5}, {edge}}}},
   tick = function (scene, t)
     local time = os.date('*t')
     scene[3][3][2][3] = .5/2 -time.sec  / 60 * 2 * .5

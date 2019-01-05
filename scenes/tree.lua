@@ -62,12 +62,12 @@ local moon =
           {
             position,
             {0,0,0,1},
-            { wrap, {edge}},
+            { wrap, 1, {edge}},
           },
           {
             position,
             {.5,0,0,.9},
-            {negate, {wrap, {edge}}},
+            {negate, {wrap, 1, {edge}}},
           }
         }
       }

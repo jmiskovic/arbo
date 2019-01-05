@@ -22,6 +22,7 @@ do local _=
             0.50,
             {
               "wrap",
+              1,
               {
                 "edge"
               }
@@ -37,6 +38,7 @@ do local _=
               },
               {
                 "wrap",
+                1,
                 {
                   "edge"
                 }
@@ -63,6 +65,7 @@ do local _=
           },
           {
             "wrap",
+            1,
             {
               "edge"
             }
@@ -98,6 +101,7 @@ do local _=
               },
               {
                 "wrap",
+                1,
                 {
                   "edge"
                 }
@@ -137,6 +141,7 @@ do local _=
                 },
                 {
                   "wrap",
+                  1,
                   {
                     "edge",
                     0.00,
@@ -157,6 +162,7 @@ do local _=
                   "negate",
                   {
                     "wrap",
+                    1,
                     {
                       "edge",
                       0.00,
@@ -200,6 +206,7 @@ do local _=
                 },
                 {
                   "wrap",
+                  1,
                   {
                     "edge"
                   }
@@ -216,6 +223,7 @@ do local _=
                 },
                 {
                   "wrap",
+                  1,
                   {
                     "edge"
                   }
@@ -254,6 +262,7 @@ do local _=
               },
               {
                 "wrap",
+                1,
                 {
                   "edge",
                   0.00,
@@ -285,6 +294,7 @@ do local _=
             1.98,
             {
               "wrap",
+              1,
               {
                 "edge",
                 0.00,
@@ -302,6 +312,7 @@ do local _=
               },
               {
                 "wrap",
+                1,
                 {
                   "edge",
                   0.00,
@@ -333,6 +344,7 @@ do local _=
             2.22,
             {
               "wrap",
+              1,
               {
                 "edge",
                 0.00,
@@ -350,6 +362,7 @@ do local _=
               },
               {
                 "wrap",
+                1,
                 {
                   "edge",
                   0.00,
@@ -378,6 +391,7 @@ do local _=
           },
           {
             "wrap",
+            1,
             {
               "edge",
               0.00,
@@ -407,6 +421,7 @@ do local _=
             1.43,
             {
               "wrap",
+              1,
               {
                 "edge",
                 0.00,
@@ -424,6 +439,7 @@ do local _=
               },
               {
                 "wrap",
+                1,
                 {
                   "edge",
                   0.00,
