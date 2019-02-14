@@ -159,6 +159,7 @@ For development, the deploying can be automated with `adb push` and executing ca
 * rendering technique is aesthetically pleasing
 * modeling 2D shapes with meta-balls
 * molding Simplex noise into starfields, hills, stripes, waves...
+* transparent background rendered as 'TV snow' (instead of classic gray checker background)
 
 ## What doesn't work
 
