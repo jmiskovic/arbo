@@ -52,7 +52,7 @@ local palette =
   {tint, {0.55, 1.00, 0.43}, {position, {0,0,31/count}, splat}},  -- sky blue
 }
 
-local scene = {memo, .02, {position, {0, -1, 0, 1.5, 1.5}, {wrap, .5, palette}}}
+local scene = {memo, .02, {position, {0, -1, 0, 1.5, 1.5}, {clip, {wrap, 1, {edge, -2}}, {wrap, .5, palette}}}}
 
 
-return scene
+return {position, {0, -1, 0, 1.5, 1.5}, {clip, {wrap, 1, {edge, -2}}, {wrap, .5, palette}}}

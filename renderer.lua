@@ -50,23 +50,23 @@ function module:draw(scene, duration, canvas, stroke, opacity)
     local y = -1 + 2 * random()
     local r,g,b,a
     local h, s, l, d = module.trace(scene, x, y, {}, 1)
-      local ss = stroke
-      love.graphics.push()
+    local ss = stroke
+    love.graphics.push()
       love.graphics.translate(x, y)
       love.graphics.rotate(.1 + random())
       if traceDistance then -- trace distance from edge for stroke size
         ss = max(stroke, min(maxStroke, .0 + .39 * abs(d)))
       end
-      --l = l * d / abs(d)  -- backify if d < 0 by setting negative lightness
-      if d < 0 then
-        l = .5 + .2 * math.random()
-        s = s * .2
-      end --noise background
+      -- l = l * d / abs(d)  -- backify if d < 0 by setting negative lightness
+      if d < 0 then --noise background
+        l = .03 + .8 * l + .1 * math.random()
+        s = s * .3
+      end
       r,g,b,a = lume.hsl(h, s, l, opacity)
       --a = d > 0 and d * 100 or 0
       love.graphics.setColor(r,g,b,a)
       love.graphics.ellipse('fill', 0, 0, ss, ss/2, 17)
-      love.graphics.pop()
+    love.graphics.pop()
 
     raysShot = raysShot + 1
   end
@@ -87,35 +87,78 @@ function module:resetStroke()
   end
 end
 
+
+-- local memos = {}
+--
+-- local ffi = require('ffi')
+-- ffi.cdef[[
+-- typedef struct { double h,s,l,d; } memoryT;
+-- ]]
+--
+-- function memoLookup(node, precision, x, y, env, depth, tracefun)
+--   tracefun = tracefun or module.trace
+--   local hsld, h, s, l, d
+--   ---[[
+--   -- introduce dithering
+--   local xd = x + precision * (random() - .5)
+--   local yd = y + precision * (random() - .5)
+--   -- snap x,y to grid
+--   local xg = xd - (xd % precision) + precision / 2
+--   local yg = yd - (yd % precision) + precision / 2
+--   --]]
+--
+--   memos[node] = memos[node] or {count = 0}
+--   local memo = memos[node] -- this is memo table for specific node
+--   --memo[xg] = memo[xg] or {} -- search by x
+--   local mem = memo[xg] and memo[xg][yg] -- search by y
+--   if not mem or random() > .95 then
+--     h, s, l, d = tracefun(node[3], x, y, env, depth + 1)
+--     if true or d > 0 then
+--       mem = ffi.new("memoryT")
+--       --mem = {}
+--       mem.h, mem.s, mem.l, mem.d = h,s,l,d
+--       memo[xg] = memo[xg] or {}
+--       memo[xg][yg] = mem
+--     end
+--     -- print(mem)
+--     -- memo[xg][yg] = {h,s,l,d}
+--     memo.count = memo.count + 1
+--   else
+--     -- h,s,l,d = unpack(hsld)
+--     h,s,l,d = mem.h, mem.s, mem.l, mem.d
+--   end
+--   --print(h, s, l, d)
+--   return h, s, l, d
+-- end
+
+---[[
 local memos = {}
+local ffi = require('ffi')
+--local hash = ffi.new('int32_t[1]', 0)
 
 function memoLookup(node, precision, x, y, env, depth, tracefun)
-  tracefun = tracefun or module.trace
-  local hsld, h, s, l, d
-  local xd = x + precision * (random() - .5)
-  local yd = y + precision * (random() - .5)
-  local xg = xd - (xd % precision) + precision / 2
-  local yg = yd - (yd % precision) + precision / 2
-  if love.keyboard.isDown('backspace') then
-    memos[node] = nil
-  end
-  memos[node] = memos[node] or {count = 0}
+  local h, s, l, d
   local memo = memos[node]
-  memo[xg] = memo[xg] or {}
-  local hsld = memo[xg][yg]
-  if not hsld or random() > .95 then
-    memo[xg] = memo[xg] or {}
-    h,s,l,d = tracefun(node[3], xg, yg, env, depth + 1)
-    -- if d > 0 then
-    --  memo[xg][yg] = {h,s,l,d}
-    -- end
-    memo[xg][yg] = {h,s,l,d}
-    memo.count = memo.count + 1
-  else
-    h,s,l,d = unpack(hsld)
+  if not memo then
+    memo = {}
+    memo.count = 0
+    memos[node] = memo
   end
-  return h, s, l, d
+  x = x - x % precision + precision / 2
+  y = y - y % precision + precision / 2
+  hash = x .. y
+  local stored = memo[hash]
+  --print(x, y, hash + 0.00, stored)
+  if not stored or random() > .95 then
+    h,s,l,d = tracefun(node[3], x, y, env, depth + 1)
+    stored = ffi.new('double[4]')
+    stored[0], stored[1], stored[2], stored[3] = h, s, l, d
+    memo[hash] = stored
+    memo.count = memo.count + 1
+  end
+  return stored[0], stored[1], stored[2], stored[3]
 end
+--]]
 
 function memoReset(node)
   memos[node] = nil
@@ -136,7 +179,7 @@ end
 
 function module.trace(node, x, y, env, depth, tracefun) -- returns ray color
   tracefun = tracefun or module.trace
-  if depth > 15 then return 0, 1, 1, 0 end
+  if depth > 28 then return 0, 1, 1, 0 end
 
   if type(node[1]) ~= 'string' then
     error('node has no type?!', node)
@@ -266,7 +309,7 @@ function module.trace(node, x, y, env, depth, tracefun) -- returns ray color
     return h,s,l,d
 
   elseif node[1] == 'memo' then
-    return memoLookup(node, R(node[2], env), x, y, env, depth, tracefun)
+    return memoLookup(node, R(node[2], env)/100, x, y, env, depth, tracefun)
 
   elseif node[1] == 'interact' then
     return tracefun(node[3], x, y, setmetatable(node[2], {__index=env}), depth + 1)

@@ -9,13 +9,12 @@ function love.conf(t)
     [6] = {1920, 1080}, -- most common desktop full screen
     [7] = {2960, 1440}, -- Samsung Galaxy S8
     [8] = {720, 1280},  -- most common Android resolution in portrait
-    wut = {2.4047058823529 * 752, 2.4047058823529 * 425}, -- wut?
   }
   t.window.title = "arbo"
-  t.window.fullscreen = not true
+  t.window.fullscreen = true
   t.window.resizable = true
   t.window.vsync = false
-  t.window.width, t.window.height = unpack(resolutions[3])
+  t.window.width, t.window.height = unpack(resolutions[5])
   t.window.x = 0
   love.filesystem.setIdentity('arbo')
 end

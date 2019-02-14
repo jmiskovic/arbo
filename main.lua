@@ -1,12 +1,24 @@
 require('nodes')
 local lume = require('lume')
 local persist = require('persist')
---local scene = {position, {0,0,0,1,1}, {edge, 0, 1}}
---local scene = require('bwm/bluecircle')
---local scene = require('scenes/edg32')
-local scene = require('scenes/falls')
 
-local savefile = 'scene.lua'
+math.randomseed(os.time())
+
+local scene = {
+  position, {0,0,0,1,1},
+  {
+    combine,
+    {
+      tint,
+      {math.random(), .5, .4, .99},
+      {position, {0,0,0,1,1}, {edge, 0, 1}}
+    }
+  }
+}
+
+--local scene = require('scenes/mountain_sunset')
+
+local savefile = 'mars'
 
 local TGF = require('TGF')
 
@@ -65,7 +77,11 @@ function getTransform(node)
   return nodeTransforms[node]
 end
 
-local function interact(node, x, y)
+local function interact(node, x, y, depth)
+  depth = depth or 1
+  if depth > 25 then
+    return false
+  end
   if node[1] == 'interact' and node[4] then
     print('distance', math.sqrt(x^2 + y^2))
     if x^2 + y^2 < 1 then
@@ -110,20 +126,20 @@ local function interact(node, x, y)
   elseif node[1] == 'position' then
     local t = getTransform(node)
     x,y = t:transformPoint(x, y)
-    return interact(node[3], x, y)
+    return interact(node[3], x, y, depth + 1)
   elseif node[1] == 'wrap' then
     local ph = -math.atan2(y, x)
     local r = (x^2 + y^2) - 1
-    return interact(node[3], ph / math.pi, r^node[2])
+    return interact(node[3], ph / math.pi, r^node[2], depth + 1)
   elseif node[1] == 'tint' then
-    return interact(node[3], x, y)
+    return interact(node[3], x, y, depth + 1)
   elseif node[1] == 'negate' then -- TODO: what to do here?
-    return interact(node[2], x, y)
+    return interact(node[2], x, y, depth + 1)
   elseif node[1] == 'combine' or node[1] == 'add' or node[1] == 'clip' then
     local i = false
     for i=2, #node do
       branch = node[i]
-      local done = interact(branch, x, y)
+      local done = interact(branch, x, y, depth + 1)
       if done then break end
     end
     return i
@@ -163,13 +179,23 @@ function love.update(dt)
   editor:update(dt)
   walkNodes(scene, 1)
   if #love.touch.getTouches() == 0 then
-    --love.timer.sleep(.02)
+    love.timer.sleep(.02)
   end
   love.timer.sleep(.02)
   for i, touchId in ipairs(love.touch.getTouches()) do
     tInit[i] = {love.touch.getPosition(touchId)}
     tInit[i+1] = nil
   end
+--[[
+  if time % 3 < dt then
+    scene = scene == require('data/day') and require('data/night') or require('data/day')
+    treeverse.root = scene
+    editor.scene = scene
+    editor.parents = {}
+    updateParents(scene, editor.parents, 1)
+    editor.columns[1].tree = scene
+  end
+--]]
 end
 
 local frames = 1000
@@ -200,6 +226,16 @@ function love.draw()
 end
 
 function love.keypressed(key)
+  if key == 'p' then
+    local column = editor.columns[math.floor(editor.selected + .5)]
+    if column and column.tree[1] == 'tint' then
+      local rgb = love.system.getClipboardText()
+      -- f75002ff
+      local r = tonumber(rgb:sub(1,1) .. rgb:sub(2,2), 16) / 255
+      local g = tonumber(rgb:sub(3,3) .. rgb:sub(4,4), 16) / 255
+      local b = tonumber(rgb:sub(5,5) .. rgb:sub(6,6), 16) / 255
+    end
+  end
   if key == 'escape' then
     guiVisible = not guiVisible
   elseif key == 'f1' then
@@ -207,9 +243,9 @@ function love.keypressed(key)
   elseif key == 'f11' then
     love.window.setFullscreen(not love.window.getFullscreen())
   elseif key == 'f2' then
-    persist.store(scene, savefile)
+    persist.store(scene, savefile .. '.lua')
   elseif key == 'f5' then
-    loaded = persist.load(savefile)
+    loaded = persist.load(savefile .. '.lua')
     print('loaded', loaded)
     if loaded then
       scene = loaded
@@ -218,6 +254,15 @@ function love.keypressed(key)
     end
     editor = require('editor').new(sw, sh, scene)
     treeverse = require('treeverse').new(sw, sh, scene, renderer)
+  elseif key == 'p' then
+    if not profilin then
+      ProFi = require 'ProFi'
+      ProFi:start()
+      profilin = true
+    else
+      ProFi:stop()
+      ProFi:writeReport('MyProfilingReport.txt')
+    end
   end
 end
 

@@ -58,6 +58,19 @@ function module.new(width, height, root, renderer)
       return parent and type(parent[1]) == 'string'
     end)
 
+  instance.icons.unwrap = icon.new('wind'    , 2, 1,
+    function(self, selected, parent)
+      replaceContent(parent,
+        {
+          'unwrap',
+          {unpack(parent)},
+        })
+    end,
+    function (self, selected, parent)
+      return parent and type(parent[1]) == 'string'
+    end)
+
+
   instance.icons.position = icon.new('position', 3, 0,
     function(self, selected, parent)
       replaceContent(parent,
@@ -114,7 +127,7 @@ function module.new(width, height, root, renderer)
       replaceContent(parent,
         {
           'memo',
-          0.05,
+          1,
           {unpack(parent)},
         })
     end,
@@ -251,11 +264,11 @@ function module.new(width, height, root, renderer)
     function(self, selected, parent)
       replaceContent(selected,
         {
-          'position',
-          {0,0,0,.5,.5},
+          'tint',
+          {math.random(), .5, .5, .99},
           {
-            'tint',
-            {math.random(), .5, .5, .99},
+            'position',
+            {0,0,0,.5,.5},
             {'wrap', 1, {'edge', 0, 1}},
           }
         })
@@ -268,11 +281,11 @@ function module.new(width, height, root, renderer)
     function(self, selected, parent)
       replaceContent(selected,
         {
-          'position',
-          {0,0,0,.5,.5},
+          'tint',
+          {math.random(), .5, .5, .99},
           {
-            'tint',
-            {math.random(), .5, .5, .99},
+            'position',
+            {0,0,0,.5,.5},
             require('scenes/shapes').makePolygon(4)
           }
         })
@@ -285,11 +298,11 @@ function module.new(width, height, root, renderer)
     function(self, selected, parent)
       replaceContent(selected,
         {
-          'position',
-          {0,0,0,.5,.5},
+          'tint',
+          {math.random(), .5, .5, .99},
           {
-            'tint',
-            {math.random(), .5, .5, .99},
+            'position',
+            {0,0,0,.5,.5},
             require('scenes/shapes').makePolygon(3),
           }
         })
@@ -349,7 +362,7 @@ local renderTime = .01
 
 function module:draw()
   local rayCount = self.renderer:draw(self.root, renderTime)
-  frames = .96 * frames + .04 * rayCount
+  frames = .98 * frames + .02 * rayCount
   love.graphics.setColor(1, 1, 1)
   --love.graphics.setClip)
   love.graphics.draw(self.renderer.canvas)
@@ -374,12 +387,14 @@ function module:update(dt)
 end
 
 function module:selectPressedLeaf(x, y)
+  editor.parents = {}
+  updateParents(editor.scene, editor.parents, 1)
   local basefun = self.renderer.trace -- wrapped in closure
   local foundNode = nil
   local foundDepth = 0
   local function traceLeaf(node, x, y, env, depth, tracefun)
     if node[1] == 'tint' then
-      local h,s,l,d = basefun(node, x, y, env, depth, traceLeaf)
+      local h,s,l,d = basefun(node, x, y, env, depth + 1, traceLeaf)
       if d > 0 then
         foundNode = node
         foundDepth = depth
@@ -392,17 +407,14 @@ function module:selectPressedLeaf(x, y)
 
   traceLeaf(self.root, x, y, {}, 1, self.renderer.trace, self.renderer.trace)
   if foundNode then
-    print(foundNode, #foundNode, foundNode[2][1], foundNode[2][3], foundNode[2][3])
-    --foundNode[2][1] = (foundNode[2][1] + .5 ) % 1
-    --foundNode[2][3] = (foundNode[2][3] + .5 ) % 1
-    -- editor = editor.new(editor.width, editor.height, foundNode)
-    -- editor.scene = foundNode
-    editor.selected = foundDepth
     local child  = foundNode
     local parent = nil
+    editor.selected = foundDepth
+    editor.columns[foundDepth] = editor.columns[foundDepth] or newColumn(child)
+    editor.columns[foundDepth].tree = child
+    editor.columns[foundDepth].selected = 2
     for i = foundDepth - 1, -1, -1 do
       if not editor.parents[child] then
-        print('not found', child)
         break
       end
       parent = editor.parents[child][1]
@@ -411,15 +423,11 @@ function module:selectPressedLeaf(x, y)
       for j, v in ipairs(parent) do
         if v == child then
           editor.columns[i].selected = j
-        print(parent, child, foundDepth, i, j, parent[1], child[1])
         end
       end
       child = parent -- ain't that just a way
     end
-    --updateParents(foundNode, editor.parents, 1)
   end
-  -- print(#ret, ret[1], ret[2], ret[3], ret[4], ret[1] * 255, ret[2] * 255, ret[3] * 255)
-    --self.renderer
 end
 
 function module:mousereleased(x, y, button, istouch, presses)

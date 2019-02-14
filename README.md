@@ -1,13 +1,15 @@
 # Arbo
 ## What?
 
-Arbo is real-time interactive 2D graphics engine based on SDF and ray tracing. Scene is composed from interactive reusable parts, defined as mathematical transformations over just two primitives.
+Arbo is work-in-progress real-time interactive 2D graphics engine based on SDF and ray tracing. Scene is composed from interactive reusable parts, defined as mathematical transformations over just two primitives.
 
 Still in early experimental phase. Development is done on Linux & Android using the LÖVE framework for Lua.
 
+**The development is discontinued for now**, as I focus on other projects.
+
 ## Why?
 
-This tool grew out of frustrations with current digital art techniques.
+This project is experiment in creating a new technique for interactive art.
 
 Pixel art is tedious to make at high resolution and it looks blocky at low resolution. Mixing low and high resolution assets looks horrible. It's also completely static; animation is done by switching between static images.
 
@@ -25,13 +27,6 @@ This project explores another approach inspired by signed distance fields and co
 * level of detail - user should be able to make some segments as vague, painted in broad strokes, while making other segments sharp and precise
 
 One additional goal for project is to have full content authoring platform on mobile phone with touch-based interface. It makes more sense to build a tool that can be used while away from computer.
-
-## Current features
-
-- very slow; unusable for fast-changing scenes
-- inaccurate and non-deterministic rendering
-- cumbersome to create and edit graphics
-- not really interactive yet
 
 ## Concepts
 
@@ -157,7 +152,37 @@ For development, the deploying can be automated with `adb push` and executing ca
 
 `adb shell am start -S -n "org.love2d.android/.GameActivity" -d "file:///sdcard/lovegame/main.lua"`
 
+## What works well
+
+* in-scene modification of shapes and especially colors
+* reusing scene elements to create shadows, highlights and other 'smart' features
+* rendering technique is aesthetically pleasing
+* modeling 2D shapes with meta-balls
+* molding Simplex noise into starfields, hills, stripes, waves...
+
+## What doesn't work
+
+* GUI is un-intuitive and fragile
+* navigating scene tree is extremely tedious
+* painfully slow rendering on mobile, even with simple scenes
+* rendering doesn't scale to complex scenes
+* scene interactivity
+
+## Unexplored paths:
+
+Some ideas for future features:
+
+* transpiling scene to GLSL code for massive speed gains (I did transpile from scene definition to non-recursive procedural Lua, that made for 2x frame rate)
+* frames-in-frames recursive rendering of scene tree, for visualization and navigation of scene elements
+* turning scene description into Lisp-like language with scoping and macro manipulations
+* linking multiple scenes into explorable world
+* rigging scene parameters to simulated variables, to render interactive agents
+* controlling stroke size/shape/opacity per-scene-object, for artistic effects
+* adding perspective transformations for 2.5D scenes
+
 ## Showcase
+
+Below are some scenes created to develop and test features of renderer. They look more alive in renderer than as static images.
 
 Tree defined as recursive geometry - a tree is composed of a single branch and few smaller trees on top.
 
@@ -178,3 +203,31 @@ Flying above earth. Both clouds and continents are simplex noise.
 Demonstration of current editor, both navigating scene tree and changing numerical values to modify colors on the fly.
 
 ![editor](./doc/editor.gif)
+
+Camera manipulation
+
+![camera](./doc/camera.gif)
+
+A forest scene modeled with manipulated simplex noise
+
+![forest](./doc/forest.png)
+
+A moonlit lake scene
+
+![lake](./doc/lake.png)
+
+Landscape scene with varying opacity and size of strokes
+
+![landscape](./doc/landscape.gif)
+
+Sunset over snowy mountain
+
+![mountain_sunset](./doc/mountain_sunset.png)
+
+Parallax effect built by linked transform operations
+
+![parallax](./doc/parallax.gif)
+
+Snow-covered pine trees
+
+![pines](./doc/pines.png)
